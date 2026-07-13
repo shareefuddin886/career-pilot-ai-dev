@@ -9,9 +9,15 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ResumeReviewRouteImport } from './routes/resume-review'
 import { Route as ResumeBuilderRouteImport } from './routes/resume-builder'
 import { Route as IndexRouteImport } from './routes/index'
 
+const ResumeReviewRoute = ResumeReviewRouteImport.update({
+  id: '/resume-review',
+  path: '/resume-review',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ResumeBuilderRoute = ResumeBuilderRouteImport.update({
   id: '/resume-builder',
   path: '/resume-builder',
@@ -26,31 +32,42 @@ const IndexRoute = IndexRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/resume-builder': typeof ResumeBuilderRoute
+  '/resume-review': typeof ResumeReviewRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/resume-builder': typeof ResumeBuilderRoute
+  '/resume-review': typeof ResumeReviewRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/resume-builder': typeof ResumeBuilderRoute
+  '/resume-review': typeof ResumeReviewRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/resume-builder'
+  fullPaths: '/' | '/resume-builder' | '/resume-review'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/resume-builder'
-  id: '__root__' | '/' | '/resume-builder'
+  to: '/' | '/resume-builder' | '/resume-review'
+  id: '__root__' | '/' | '/resume-builder' | '/resume-review'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ResumeBuilderRoute: typeof ResumeBuilderRoute
+  ResumeReviewRoute: typeof ResumeReviewRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/resume-review': {
+      id: '/resume-review'
+      path: '/resume-review'
+      fullPath: '/resume-review'
+      preLoaderRoute: typeof ResumeReviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/resume-builder': {
       id: '/resume-builder'
       path: '/resume-builder'
@@ -71,6 +88,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ResumeBuilderRoute: ResumeBuilderRoute,
+  ResumeReviewRoute: ResumeReviewRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
