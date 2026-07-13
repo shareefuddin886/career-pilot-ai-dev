@@ -9,10 +9,17 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SkillAssessmentRouteImport } from './routes/skill-assessment'
 import { Route as ResumeReviewRouteImport } from './routes/resume-review'
 import { Route as ResumeBuilderRouteImport } from './routes/resume-builder'
+import { Route as MockInterviewRouteImport } from './routes/mock-interview'
 import { Route as IndexRouteImport } from './routes/index'
 
+const SkillAssessmentRoute = SkillAssessmentRouteImport.update({
+  id: '/skill-assessment',
+  path: '/skill-assessment',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ResumeReviewRoute = ResumeReviewRouteImport.update({
   id: '/resume-review',
   path: '/resume-review',
@@ -23,6 +30,11 @@ const ResumeBuilderRoute = ResumeBuilderRouteImport.update({
   path: '/resume-builder',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MockInterviewRoute = MockInterviewRouteImport.update({
+  id: '/mock-interview',
+  path: '/mock-interview',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -31,36 +43,67 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/mock-interview': typeof MockInterviewRoute
   '/resume-builder': typeof ResumeBuilderRoute
   '/resume-review': typeof ResumeReviewRoute
+  '/skill-assessment': typeof SkillAssessmentRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/mock-interview': typeof MockInterviewRoute
   '/resume-builder': typeof ResumeBuilderRoute
   '/resume-review': typeof ResumeReviewRoute
+  '/skill-assessment': typeof SkillAssessmentRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/mock-interview': typeof MockInterviewRoute
   '/resume-builder': typeof ResumeBuilderRoute
   '/resume-review': typeof ResumeReviewRoute
+  '/skill-assessment': typeof SkillAssessmentRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/resume-builder' | '/resume-review'
+  fullPaths:
+    | '/'
+    | '/mock-interview'
+    | '/resume-builder'
+    | '/resume-review'
+    | '/skill-assessment'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/resume-builder' | '/resume-review'
-  id: '__root__' | '/' | '/resume-builder' | '/resume-review'
+  to:
+    | '/'
+    | '/mock-interview'
+    | '/resume-builder'
+    | '/resume-review'
+    | '/skill-assessment'
+  id:
+    | '__root__'
+    | '/'
+    | '/mock-interview'
+    | '/resume-builder'
+    | '/resume-review'
+    | '/skill-assessment'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  MockInterviewRoute: typeof MockInterviewRoute
   ResumeBuilderRoute: typeof ResumeBuilderRoute
   ResumeReviewRoute: typeof ResumeReviewRoute
+  SkillAssessmentRoute: typeof SkillAssessmentRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/skill-assessment': {
+      id: '/skill-assessment'
+      path: '/skill-assessment'
+      fullPath: '/skill-assessment'
+      preLoaderRoute: typeof SkillAssessmentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/resume-review': {
       id: '/resume-review'
       path: '/resume-review'
@@ -75,6 +118,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ResumeBuilderRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/mock-interview': {
+      id: '/mock-interview'
+      path: '/mock-interview'
+      fullPath: '/mock-interview'
+      preLoaderRoute: typeof MockInterviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -87,8 +137,10 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  MockInterviewRoute: MockInterviewRoute,
   ResumeBuilderRoute: ResumeBuilderRoute,
   ResumeReviewRoute: ResumeReviewRoute,
+  SkillAssessmentRoute: SkillAssessmentRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
