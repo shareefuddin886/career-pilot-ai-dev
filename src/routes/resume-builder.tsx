@@ -1,29 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { FileText } from "lucide-react";
-import { ComingNext } from "@/components/ComingNext";
+import ResumeStudio from "@/components/resume-studio/ResumeStudio";
 
 export const Route = createFileRoute("/resume-builder")({
   head: () => ({
     meta: [
-      { title: "AI Resume Builder — CareerPilot AI" },
+      { title: "Resume Studio — CareerPilot AI" },
       {
         name: "description",
         content:
-          "Generate ATS-ready resumes with AI-crafted bullet points, stronger verbs, and modern layouts.",
+          "A premium AI-powered resume workspace. Build ATS-friendly resumes with live preview, smart suggestions, and one-click export.",
       },
     ],
   }),
-  component: () => (
-    <ComingNext
-      icon={FileText}
-      title="AI Resume Builder"
-      tagline="Fill in your details once. Get a polished, ATS-ready resume with AI-rewritten bullets and downloadable PDF."
-      points={[
-        "Structured form: education, skills, projects, experience",
-        "Multiple modern resume layouts",
-        "Gemini rewrites weak bullet points",
-        "One-click PDF export",
-      ]}
-    />
-  ),
+  component: ResumeStudio,
 });
