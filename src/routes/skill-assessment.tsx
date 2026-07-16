@@ -4,17 +4,25 @@ import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   BrainCircuit,
+  Bug,
   Check,
   ChevronRight,
   Code2,
+  Cpu,
+  Flame,
+  Gauge,
   Layers,
   Lightbulb,
   Loader2,
+  Map as MapIcon,
+  Rocket,
   Sparkles,
   Target,
   Timer,
   TrendingUp,
+  Wand2,
   X,
+  Zap,
 } from "lucide-react";
 import {
   evaluateAssessment,
@@ -25,11 +33,11 @@ import {
 export const Route = createFileRoute("/skill-assessment")({
   head: () => ({
     meta: [
-      { title: "Skill Assessment — CareerPilot AI" },
+      { title: "AI Skill Assessment — CareerPilot AI" },
       {
         name: "description",
         content:
-          "Adaptive MCQ, code and scenario quizzes across Java, React, SQL, and more — with AI explanations, weak-topic analysis, and a personalized learning path.",
+          "Adaptive AI assessments across Java, React, SQL, Python and more. MCQ, coding, debugging and scenario challenges with an instant performance report and personalized learning roadmap.",
       },
     ],
   }),
@@ -38,51 +46,98 @@ export const Route = createFileRoute("/skill-assessment")({
 
 type Phase = "setup" | "quiz" | "report";
 type Difficulty = "easy" | "medium" | "hard";
+type Mode = "mixed" | "mcq" | "coding" | "scenario" | "debugging" | "rapid";
 
-const TECHS = [
-  { id: "Java", topics: "OOP, Collections, JVM, Streams" },
-  { id: "Spring Boot", topics: "DI, JPA, REST, Security" },
-  { id: "Python", topics: "Syntax, Data structures, OOP" },
-  { id: "JavaScript", topics: "ES6+, Async, DOM" },
-  { id: "React", topics: "Hooks, State, Rendering" },
-  { id: "SQL", topics: "Joins, Indexing, Windows" },
-  { id: "C++", topics: "Pointers, STL, OOP" },
-  { id: "Data Structures", topics: "Arrays, Trees, Graphs" },
+type Tech = { id: string; badge: string; topics: string[]; approx: string };
+
+const TECHS: Tech[] = [
+  { id: "Java", badge: "JV", topics: ["OOP", "Collections", "Streams", "JVM", "Multithreading"], approx: "200+ concepts" },
+  { id: "Spring Boot", badge: "SB", topics: ["DI", "JPA", "REST", "Security", "Actuator"], approx: "150+ concepts" },
+  { id: "Python", badge: "PY", topics: ["Syntax", "OOP", "Generators", "Async", "Libs"], approx: "180+ concepts" },
+  { id: "JavaScript", badge: "JS", topics: ["ES6+", "Async", "DOM", "Closures", "Modules"], approx: "220+ concepts" },
+  { id: "React", badge: "Rx", topics: ["Hooks", "State", "Rendering", "Suspense", "Perf"], approx: "160+ concepts" },
+  { id: "SQL", badge: "SQ", topics: ["Joins", "Indexes", "Windows", "CTEs", "Tuning"], approx: "120+ concepts" },
+  { id: "MongoDB", badge: "Mo", topics: ["Documents", "Aggregation", "Indexing", "Sharding"], approx: "90+ concepts" },
+  { id: "Node.js", badge: "Nd", topics: ["Event loop", "Streams", "APIs", "Perf"], approx: "140+ concepts" },
+  { id: "C++", badge: "C+", topics: ["Pointers", "STL", "OOP", "Templates"], approx: "170+ concepts" },
+  { id: "Data Structures", badge: "DS", topics: ["Arrays", "Trees", "Graphs", "Heaps"], approx: "150+ concepts" },
+  { id: "Algorithms", badge: "Al", topics: ["Greedy", "DP", "Graphs", "Divide & conquer"], approx: "180+ concepts" },
+  { id: "Git", badge: "Gt", topics: ["Branching", "Rebase", "Workflows"], approx: "60+ concepts" },
 ];
 
-const DIFFS: { id: Difficulty; label: string; count: number; time: number; hint: string }[] = [
-  { id: "easy", label: "Easy", count: 6, time: 10, hint: "Fundamentals & syntax" },
-  { id: "medium", label: "Medium", count: 9, time: 18, hint: "Applied problem solving" },
-  { id: "hard", label: "Hard", count: 12, time: 25, hint: "Design & edge cases" },
+const DIFFS: {
+  id: Difficulty;
+  label: string;
+  hint: string;
+  sub: string;
+  icon: React.ComponentType<{ className?: string }>;
+}[] = [
+  { id: "easy", label: "Easy", hint: "Beginner · Fundamentals", sub: "Basic syntax and core ideas", icon: Sparkles },
+  { id: "medium", label: "Medium", hint: "Placement · Problem solving", sub: "Interview concepts and applied logic", icon: Flame },
+  { id: "hard", label: "Hard", hint: "Company interview · Advanced", sub: "System design and edge cases", icon: Rocket },
 ];
 
-const MIX: Record<Difficulty, { mcq: number; code: number; scenario: number }> = {
-  easy: { mcq: 4, code: 1, scenario: 1 },
-  medium: { mcq: 5, code: 3, scenario: 1 },
-  hard: { mcq: 6, code: 4, scenario: 2 },
-};
+const MODES: {
+  id: Mode;
+  label: string;
+  desc: string;
+  icon: React.ComponentType<{ className?: string }>;
+}[] = [
+  { id: "mixed", label: "Mixed", desc: "Balanced MCQ, code and scenario", icon: Layers },
+  { id: "mcq", label: "MCQ", desc: "Conceptual multiple choice", icon: BrainCircuit },
+  { id: "coding", label: "Coding", desc: "Code prediction & completion", icon: Code2 },
+  { id: "scenario", label: "Scenario", desc: "Real-world design problems", icon: Lightbulb },
+  { id: "debugging", label: "Debugging", desc: "Spot and fix bugs in code", icon: Bug },
+  { id: "rapid", label: "Rapid Fire", desc: "Short, quick MCQs", icon: Zap },
+];
+
+function computeMix(mode: Mode, count: number, diff: Difficulty) {
+  const c = count;
+  if (mode === "mcq" || mode === "rapid") return { mcq: c, code: 0, scenario: 0 };
+  if (mode === "coding" || mode === "debugging") return { mcq: 0, code: c, scenario: 0 };
+  if (mode === "scenario") return { mcq: 0, code: 0, scenario: c };
+  const s = diff === "hard" ? 2 : 1;
+  const code = Math.max(1, Math.round(c * (diff === "hard" ? 0.4 : diff === "medium" ? 0.3 : 0.2)));
+  const mcq = Math.max(1, c - code - s);
+  return { mcq, code, scenario: s };
+}
+
+function estimateDuration(count: number, diff: Difficulty, mode: Mode) {
+  const perQ =
+    mode === "rapid" ? 0.6 : mode === "coding" || mode === "debugging" ? 2.5 : mode === "scenario" ? 3 : 1.5;
+  const diffMul = diff === "hard" ? 1.4 : diff === "medium" ? 1.1 : 0.9;
+  return Math.max(3, Math.round(count * perQ * diffMul));
+}
 
 type Answer = { selectedIndex: number | null; text: string };
 
 function SkillAssessmentPage() {
   const [phase, setPhase] = useState<Phase>("setup");
+
   const [tech, setTech] = useState<string>("Java");
+  const [customTech, setCustomTech] = useState("");
   const [diff, setDiff] = useState<Difficulty>("medium");
+  const [mode, setMode] = useState<Mode>("mixed");
+  const [count, setCount] = useState<number>(10);
+  const [adaptive, setAdaptive] = useState(true);
+  const [aiExplanations, setAiExplanations] = useState(true);
+  const [roadmap, setRoadmap] = useState(true);
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [questions, setQuestions] = useState<AssessmentQuestion[]>([]);
   const [answers, setAnswers] = useState<Record<string, Answer>>({});
   const [current, setCurrent] = useState(0);
-  const [report, setReport] = useState<Awaited<ReturnType<typeof evaluateAssessment>> | null>(
-    null
-  );
+  const [report, setReport] = useState<Awaited<ReturnType<typeof evaluateAssessment>> | null>(null);
   const [timeLeft, setTimeLeft] = useState<number>(0);
 
   const gen = useServerFn(generateAssessment);
   const evalFn = useServerFn(evaluateAssessment);
 
-  const meta = DIFFS.find((d) => d.id === diff)!;
+  const activeTech = tech === "__custom" ? customTech.trim() || "Custom" : tech;
+  const mix = useMemo(() => computeMix(mode, count, diff), [mode, count, diff]);
+  const duration = useMemo(() => estimateDuration(count, diff, mode), [count, diff, mode]);
 
   useEffect(() => {
     if (phase !== "quiz") return;
@@ -100,15 +155,27 @@ function SkillAssessmentPage() {
     setLoading(true);
     try {
       const qs = await gen({
-        data: { technology: tech, difficulty: diff, count: meta.count, mix: MIX[diff] },
+        data: {
+          technology: activeTech,
+          difficulty: diff,
+          count,
+          mix,
+          mode,
+          adaptive,
+        },
       });
+      if (!qs || qs.length === 0) throw new Error("No questions were generated. Try again.");
       setQuestions(qs);
       setAnswers({});
       setCurrent(0);
-      setTimeLeft(meta.time * 60);
+      setTimeLeft(duration * 60);
       setPhase("quiz");
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to generate questions");
+      setError(
+        e instanceof Error
+          ? `Couldn't generate the assessment: ${e.message}. Retry, or pick a different technology.`
+          : "Failed to generate questions"
+      );
     } finally {
       setLoading(false);
     }
@@ -123,7 +190,7 @@ function SkillAssessmentPage() {
         selectedIndex: answers[q.id]?.selectedIndex ?? null,
       }));
       const res = await evalFn({
-        data: { technology: tech, difficulty: diff, answers: payload },
+        data: { technology: activeTech, difficulty: diff, answers: payload },
       });
       setReport(res);
       setPhase("report");
@@ -145,8 +212,23 @@ function SkillAssessmentPage() {
             key="setup"
             tech={tech}
             setTech={setTech}
+            customTech={customTech}
+            setCustomTech={setCustomTech}
+            activeTech={activeTech}
             diff={diff}
             setDiff={setDiff}
+            mode={mode}
+            setMode={setMode}
+            count={count}
+            setCount={setCount}
+            adaptive={adaptive}
+            setAdaptive={setAdaptive}
+            aiExplanations={aiExplanations}
+            setAiExplanations={setAiExplanations}
+            roadmap={roadmap}
+            setRoadmap={setRoadmap}
+            mix={mix}
+            duration={duration}
             loading={loading}
             error={error}
             onStart={start}
@@ -155,7 +237,7 @@ function SkillAssessmentPage() {
         {phase === "quiz" && (
           <Quiz
             key="quiz"
-            tech={tech}
+            tech={activeTech}
             diff={diff}
             questions={questions}
             current={current}
@@ -170,7 +252,7 @@ function SkillAssessmentPage() {
         {phase === "report" && report && (
           <Report
             key="report"
-            tech={tech}
+            tech={activeTech}
             diff={diff}
             report={report}
             onRestart={() => {
@@ -186,133 +268,322 @@ function SkillAssessmentPage() {
 
 /* ---------------- Setup ---------------- */
 
-function Setup({
-  tech,
-  setTech,
-  diff,
-  setDiff,
-  loading,
-  error,
-  onStart,
-}: {
+function Setup(props: {
   tech: string;
   setTech: (v: string) => void;
+  customTech: string;
+  setCustomTech: (v: string) => void;
+  activeTech: string;
   diff: Difficulty;
   setDiff: (v: Difficulty) => void;
+  mode: Mode;
+  setMode: (v: Mode) => void;
+  count: number;
+  setCount: (v: number) => void;
+  adaptive: boolean;
+  setAdaptive: (v: boolean) => void;
+  aiExplanations: boolean;
+  setAiExplanations: (v: boolean) => void;
+  roadmap: boolean;
+  setRoadmap: (v: boolean) => void;
+  mix: { mcq: number; code: number; scenario: number };
+  duration: number;
   loading: boolean;
   error: string | null;
   onStart: () => void;
 }) {
-  const meta = DIFFS.find((d) => d.id === diff)!;
+  const {
+    tech, setTech, customTech, setCustomTech, activeTech,
+    diff, setDiff, mode, setMode, count, setCount,
+    adaptive, setAdaptive, aiExplanations, setAiExplanations, roadmap, setRoadmap,
+    mix, duration, loading, error, onStart,
+  } = props;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -8 }}
-      className="mx-auto max-w-6xl px-4 md:px-8"
+      className="mx-auto max-w-7xl px-4 md:px-8"
     >
-      <div className="max-w-2xl">
-        <span className="inline-flex items-center gap-2 rounded-full glass px-3 py-1.5 text-xs font-medium text-muted-foreground">
-          <Sparkles className="h-3.5 w-3.5 text-primary" />
-          Adaptive AI Assessment
-        </span>
-        <h1 className="mt-6 text-4xl md:text-6xl font-semibold tracking-tight leading-[1.05]">
-          Test your skills the way{" "}
-          <span className="text-gradient-lime">recruiters do.</span>
-        </h1>
-        <p className="mt-4 text-muted-foreground text-lg">
-          Pick a technology and difficulty. Answer MCQ, code, and scenario questions.
-          Get AI-explained mistakes and a personalized learning path.
-        </p>
-      </div>
-
-      <div className="mt-12 grid lg:grid-cols-[1fr_360px] gap-6">
-        <div className="glass rounded-3xl p-8 shadow-card">
-          <SectionTitle icon={Layers} label="Technology" />
-          <div className="mt-5 grid sm:grid-cols-2 md:grid-cols-3 gap-3">
-            {TECHS.map((t) => (
-              <button
-                key={t.id}
-                onClick={() => setTech(t.id)}
-                className={`text-left rounded-2xl border p-4 transition-all ${
-                  tech === t.id
-                    ? "border-primary/60 bg-primary/5 shadow-glow"
-                    : "border-border/60 hover:border-border bg-surface/40"
-                }`}
-              >
-                <div className="font-semibold">{t.id}</div>
-                <div className="mt-1 text-xs text-muted-foreground">{t.topics}</div>
-              </button>
+      {/* Hero */}
+      <div className="grid lg:grid-cols-[1.1fr_.9fr] gap-10 items-center">
+        <div>
+          <span className="inline-flex items-center gap-2 rounded-full glass px-3 py-1.5 text-xs font-medium text-muted-foreground">
+            <Sparkles className="h-3.5 w-3.5 text-primary" />
+            Adaptive AI Assessment
+          </span>
+          <h1 className="mt-6 text-4xl md:text-6xl font-semibold tracking-tight leading-[1.03]">
+            AI Skill <span className="text-gradient-lime">Assessment</span>
+          </h1>
+          <p className="mt-5 text-muted-foreground text-lg max-w-xl leading-relaxed">
+            Measure your real technical skills through AI-generated coding, MCQs, debugging
+            challenges and scenario questions. Get an instant performance report and a
+            personalized learning roadmap.
+          </p>
+          <div className="mt-6 flex flex-wrap gap-2 text-xs">
+            {["Adaptive difficulty", "AI explanations", "Weakness analysis", "Learning path"].map((t) => (
+              <span key={t} className="rounded-full glass px-3 py-1.5 text-muted-foreground">
+                {t}
+              </span>
             ))}
           </div>
+        </div>
+        <HeroIllustration />
+      </div>
 
-          <div className="mt-10">
-            <SectionTitle icon={Target} label="Difficulty" />
-            <div className="mt-5 grid sm:grid-cols-3 gap-3">
-              {DIFFS.map((d) => (
-                <button
-                  key={d.id}
-                  onClick={() => setDiff(d.id)}
-                  className={`rounded-2xl border p-5 text-left transition-all ${
-                    diff === d.id
-                      ? "border-primary/60 bg-primary/5 shadow-glow"
-                      : "border-border/60 hover:border-border bg-surface/40"
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="font-semibold">{d.label}</span>
-                    <span className="text-xs text-muted-foreground">
-                      {d.count} Qs · {d.time}m
-                    </span>
+      {/* Setup grid */}
+      <div className="mt-16 grid lg:grid-cols-[1fr_380px] gap-6">
+        <div className="space-y-6">
+          <StepCard step={1} title="Choose technology" icon={Layers}>
+            <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-3">
+              {TECHS.map((t) => {
+                const active = tech === t.id;
+                return (
+                  <button
+                    key={t.id}
+                    onClick={() => setTech(t.id)}
+                    className={`group relative text-left rounded-2xl border p-4 transition-all overflow-hidden ${
+                      active
+                        ? "border-primary/60 bg-primary/5 shadow-glow"
+                        : "border-border/60 hover:border-primary/40 bg-surface/40"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span
+                        className="grid h-10 w-10 place-items-center rounded-xl text-xs font-bold text-primary-foreground shrink-0"
+                        style={{ background: "var(--gradient-lime)" }}
+                      >
+                        {t.badge}
+                      </span>
+                      <div className="min-w-0">
+                        <div className="font-semibold truncate">{t.id}</div>
+                        <div className="text-[11px] text-primary">{t.approx}</div>
+                      </div>
+                    </div>
+                    <div className="mt-3 flex flex-wrap gap-1.5">
+                      {t.topics.slice(0, 4).map((tp) => (
+                        <span key={tp} className="rounded-full bg-surface px-2 py-0.5 text-[10px] text-muted-foreground">
+                          {tp}
+                        </span>
+                      ))}
+                    </div>
+                  </button>
+                );
+              })}
+
+              {/* Other technology */}
+              <button
+                onClick={() => setTech("__custom")}
+                className={`text-left rounded-2xl border-2 border-dashed p-4 transition-all ${
+                  tech === "__custom"
+                    ? "border-primary/60 bg-primary/5"
+                    : "border-border/60 hover:border-primary/40 bg-surface/20"
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <span className="grid h-10 w-10 place-items-center rounded-xl bg-surface text-primary shrink-0">
+                    <Wand2 className="h-4 w-4" />
+                  </span>
+                  <div>
+                    <div className="font-semibold">Other technology</div>
+                    <div className="text-[11px] text-muted-foreground">Type any stack — AI adapts</div>
                   </div>
-                  <p className="mt-2 text-xs text-muted-foreground">{d.hint}</p>
-                </button>
-              ))}
+                </div>
+                {tech === "__custom" && (
+                  <input
+                    autoFocus
+                    value={customTech}
+                    onChange={(e) => setCustomTech(e.target.value)}
+                    placeholder="e.g. Kubernetes, Rust, Django"
+                    className="mt-3 w-full rounded-xl border border-border/60 bg-surface/60 px-3 py-2 text-sm outline-none focus:border-primary/60"
+                  />
+                )}
+              </button>
             </div>
-          </div>
+          </StepCard>
+
+          <StepCard step={2} title="Difficulty" icon={Target}>
+            <div className="grid sm:grid-cols-3 gap-3">
+              {DIFFS.map((d) => {
+                const active = diff === d.id;
+                const Icon = d.icon;
+                return (
+                  <button
+                    key={d.id}
+                    onClick={() => setDiff(d.id)}
+                    className={`rounded-2xl border p-4 text-left transition-all ${
+                      active
+                        ? "border-primary/60 bg-primary/5 shadow-glow"
+                        : "border-border/60 hover:border-primary/40 bg-surface/40"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`grid h-8 w-8 place-items-center rounded-lg ${
+                          active ? "text-primary-foreground" : "bg-surface text-primary"
+                        }`}
+                        style={active ? { background: "var(--gradient-lime)" } : undefined}
+                      >
+                        <Icon className="h-4 w-4" />
+                      </span>
+                      <div className="font-semibold">{d.label}</div>
+                    </div>
+                    <div className="mt-3 text-xs text-primary">{d.hint}</div>
+                    <div className="mt-1 text-xs text-muted-foreground">{d.sub}</div>
+                  </button>
+                );
+              })}
+            </div>
+          </StepCard>
+
+          <StepCard step={3} title="Assessment mode" icon={Cpu}>
+            <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-3">
+              {MODES.map((m) => {
+                const active = mode === m.id;
+                const Icon = m.icon;
+                return (
+                  <button
+                    key={m.id}
+                    onClick={() => setMode(m.id)}
+                    className={`rounded-2xl border p-4 text-left transition-all ${
+                      active
+                        ? "border-primary/60 bg-primary/5 shadow-glow"
+                        : "border-border/60 hover:border-primary/40 bg-surface/40"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Icon className={`h-4 w-4 ${active ? "text-primary" : "text-muted-foreground"}`} />
+                      <div className="font-semibold text-sm">{m.label}</div>
+                    </div>
+                    <div className="mt-2 text-xs text-muted-foreground leading-relaxed">{m.desc}</div>
+                  </button>
+                );
+              })}
+            </div>
+          </StepCard>
+
+          <StepCard step={4} title="Number of questions" icon={Gauge}>
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Total questions</span>
+              <span className="font-semibold text-lg tabular-nums text-gradient-lime">{count}</span>
+            </div>
+            <input
+              type="range"
+              min={5}
+              max={20}
+              step={1}
+              value={count}
+              onChange={(e) => setCount(Number(e.target.value))}
+              className="mt-4 w-full accent-[color:var(--primary)]"
+            />
+            <div className="mt-2 flex justify-between text-[11px] text-muted-foreground">
+              <span>5</span><span>10</span><span>15</span><span>20</span>
+            </div>
+            <div className="mt-4 flex items-center gap-2 text-xs text-muted-foreground">
+              <Timer className="h-3.5 w-3.5 text-primary" />
+              Estimated duration: <span className="text-foreground font-medium">{duration} min</span>
+            </div>
+          </StepCard>
+
+          <StepCard step={5} title="AI settings" icon={Sparkles}>
+            <div className="grid sm:grid-cols-2 gap-3">
+              <Toggle
+                label="Adaptive difficulty"
+                desc="AI reweights topics based on your answers"
+                value={adaptive}
+                onChange={setAdaptive}
+              />
+              <Toggle
+                label="AI explanations"
+                desc="Show reasoning after every question"
+                value={aiExplanations}
+                onChange={setAiExplanations}
+              />
+              <Toggle
+                label="Personalized roadmap"
+                desc="Generate a learning plan for weak topics"
+                value={roadmap}
+                onChange={setRoadmap}
+              />
+              <Toggle
+                label="Interview readiness score"
+                desc="Company-tier readiness estimate"
+                value={true}
+                onChange={() => {}}
+                locked
+              />
+            </div>
+          </StepCard>
         </div>
 
-        <aside className="glass rounded-3xl p-6 shadow-card h-fit sticky top-24">
-          <div className="text-xs uppercase tracking-widest text-primary" style={{ fontFamily: "var(--font-mono)" }}>
-            /Session
-          </div>
-          <h3 className="mt-2 text-2xl font-semibold tracking-tight">Ready to begin</h3>
-          <div className="mt-6 space-y-3 text-sm">
-            <Row label="Technology" value={tech} />
-            <Row label="Difficulty" value={meta.label} />
-            <Row label="Questions" value={`${meta.count}`} />
-            <Row label="Duration" value={`${meta.time} min`} />
-            <Row
-              label="Mix"
-              value={`${MIX[diff].mcq} MCQ · ${MIX[diff].code} Code · ${MIX[diff].scenario} Scenario`}
-            />
-          </div>
-
-          {error && (
-            <div className="mt-4 rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
-              {error}
+        {/* Live preview */}
+        <aside className="lg:sticky lg:top-24 h-fit">
+          <div className="glass rounded-3xl p-6 shadow-card relative overflow-hidden">
+            <div className="absolute -top-24 -right-24 h-56 w-56 rounded-full bg-primary/20 blur-3xl pointer-events-none" />
+            <div
+              className="text-xs uppercase tracking-widest text-primary"
+              style={{ fontFamily: "var(--font-mono)" }}
+            >
+              /Live session
             </div>
-          )}
+            <h3 className="mt-2 text-2xl font-semibold tracking-tight">
+              {activeTech} · <span className="text-gradient-lime capitalize">{diff}</span>
+            </h3>
 
-          <button
-            onClick={onStart}
-            disabled={loading}
-            className="mt-6 w-full inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-semibold text-primary-foreground shadow-glow transition-transform hover:scale-[1.02] disabled:opacity-60 disabled:hover:scale-100"
-            style={{ background: "var(--gradient-lime)" }}
-          >
-            {loading ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" /> Generating…
-              </>
-            ) : (
-              <>
-                Start Assessment <ChevronRight className="h-4 w-4" />
-              </>
+            <div className="mt-5 grid grid-cols-2 gap-2">
+              <Stat label="Questions" value={String(count)} />
+              <Stat label="Duration" value={`${duration}m`} />
+              <Stat label="Mode" value={MODES.find((m) => m.id === mode)!.label} />
+              <Stat label="Adaptive" value={adaptive ? "On" : "Off"} />
+            </div>
+
+            <div className="mt-5">
+              <div className="text-[11px] uppercase tracking-widest text-muted-foreground mb-2">
+                Question mix
+              </div>
+              <MixBar mix={mix} />
+              <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-muted-foreground">
+                {mix.mcq > 0 && <span>● MCQ {mix.mcq}</span>}
+                {mix.code > 0 && <span>● Code {mix.code}</span>}
+                {mix.scenario > 0 && <span>● Scenario {mix.scenario}</span>}
+              </div>
+            </div>
+
+            <div className="mt-5 space-y-2 text-xs">
+              <FeatureRow label="Learning roadmap" on={roadmap} />
+              <FeatureRow label="Weakness analysis" on />
+              <FeatureRow label="Strength detection" on />
+              <FeatureRow label="Interview readiness score" on />
+              <FeatureRow label="AI explanations" on={aiExplanations} />
+            </div>
+
+            {error && (
+              <div className="mt-5 rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+                {error}
+              </div>
             )}
-          </button>
-          <p className="mt-3 text-[11px] text-muted-foreground text-center">
-            Powered by Gemini · Adaptive question set
-          </p>
+
+            <button
+              onClick={onStart}
+              disabled={loading || (tech === "__custom" && !customTech.trim())}
+              className="mt-6 w-full inline-flex items-center justify-center gap-2 rounded-full px-6 py-3.5 text-sm font-semibold text-primary-foreground shadow-glow transition-transform hover:scale-[1.02] disabled:opacity-60 disabled:hover:scale-100"
+              style={{ background: "var(--gradient-lime)" }}
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" /> Generating your assessment…
+                </>
+              ) : (
+                <>
+                  Start Assessment <ChevronRight className="h-4 w-4" />
+                </>
+              )}
+            </button>
+            <p className="mt-3 text-[11px] text-muted-foreground text-center">
+              Powered by Gemini · Every question generated fresh
+            </p>
+          </div>
         </aside>
       </div>
     </motion.div>
@@ -345,9 +616,13 @@ function Quiz({
   onSubmit: () => void;
 }) {
   const q = questions[current];
-  const answered = Object.keys(answers).length;
+  const answered = Object.keys(answers).filter((k) => {
+    const a = answers[k];
+    return a.selectedIndex != null || a.text.trim().length > 0;
+  }).length;
   const mm = String(Math.floor(timeLeft / 60)).padStart(2, "0");
   const ss = String(timeLeft % 60).padStart(2, "0");
+  const lowTime = timeLeft < 60;
 
   const setAnswer = (patch: Partial<Answer>) =>
     setAnswers((prev) => ({
@@ -370,20 +645,30 @@ function Quiz({
     >
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <div className="text-xs uppercase tracking-widest text-primary" style={{ fontFamily: "var(--font-mono)" }}>
+          <div
+            className="text-xs uppercase tracking-widest text-primary"
+            style={{ fontFamily: "var(--font-mono)" }}
+          >
             /{tech} · {diff}
           </div>
           <h2 className="mt-1 text-2xl md:text-3xl font-semibold tracking-tight">
-            Question {current + 1} <span className="text-muted-foreground">/ {questions.length}</span>
+            Question {current + 1}{" "}
+            <span className="text-muted-foreground">/ {questions.length}</span>
           </h2>
         </div>
         <div className="flex items-center gap-3">
-          <div className="glass rounded-full px-4 py-2 text-sm inline-flex items-center gap-2">
-            <Timer className="h-4 w-4 text-primary" />
-            <span className="tabular-nums font-medium">{mm}:{ss}</span>
+          <div
+            className={`glass rounded-full px-4 py-2 text-sm inline-flex items-center gap-2 ${
+              lowTime ? "border-destructive/50 text-destructive" : ""
+            }`}
+          >
+            <Timer className={`h-4 w-4 ${lowTime ? "text-destructive" : "text-primary"}`} />
+            <span className="tabular-nums font-medium">
+              {mm}:{ss}
+            </span>
           </div>
           <div className="glass rounded-full px-4 py-2 text-sm inline-flex items-center gap-2">
-            <Check className="h-4 w-4 text-primary" /> {answered}/{questions.length} answered
+            <Check className="h-4 w-4 text-primary" /> {answered}/{questions.length}
           </div>
         </div>
       </div>
@@ -412,7 +697,10 @@ function Quiz({
           <h3 className="mt-4 text-xl md:text-2xl font-semibold leading-snug">{q.prompt}</h3>
 
           {q.code && (
-            <pre className="mt-5 overflow-auto rounded-2xl border border-border/60 bg-black/40 p-4 text-sm leading-relaxed" style={{ fontFamily: "var(--font-mono)" }}>
+            <pre
+              className="mt-5 overflow-auto rounded-2xl border border-border/60 bg-black/40 p-4 text-sm leading-relaxed"
+              style={{ fontFamily: "var(--font-mono)" }}
+            >
               <code>{q.code}</code>
             </pre>
           )}
@@ -428,7 +716,7 @@ function Quiz({
                     className={`w-full text-left rounded-2xl border p-4 transition-all ${
                       selected
                         ? "border-primary/60 bg-primary/5"
-                        : "border-border/60 hover:border-border bg-surface/40"
+                        : "border-border/60 hover:border-primary/40 bg-surface/40"
                     }`}
                   >
                     <div className="flex items-start gap-3">
@@ -475,7 +763,15 @@ function Quiz({
                 className="inline-flex items-center gap-2 rounded-full px-6 py-2.5 text-sm font-semibold text-primary-foreground shadow-glow disabled:opacity-60"
                 style={{ background: "var(--gradient-lime)" }}
               >
-                {loading ? <><Loader2 className="h-4 w-4 animate-spin" /> Grading…</> : <>Submit Assessment <ChevronRight className="h-4 w-4" /></>}
+                {loading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" /> Grading…
+                  </>
+                ) : (
+                  <>
+                    Submit Assessment <ChevronRight className="h-4 w-4" />
+                  </>
+                )}
               </button>
             ) : (
               <button
@@ -515,7 +811,7 @@ function Quiz({
             })}
           </div>
           <div className="mt-4 text-[11px] text-muted-foreground leading-relaxed px-1">
-            Auto-submits when time runs out. You can revisit any question before submitting.
+            Auto-submits when time runs out. Revisit any question before submitting.
           </div>
         </aside>
       </div>
@@ -553,7 +849,7 @@ function Report({
         <div>
           <span className="inline-flex items-center gap-2 rounded-full glass px-3 py-1.5 text-xs font-medium text-muted-foreground">
             <BrainCircuit className="h-3.5 w-3.5 text-primary" />
-            {tech} · {diff}
+            {tech} · {diff} · {report.skillLevel}
           </span>
           <h1 className="mt-5 text-4xl md:text-5xl font-semibold tracking-tight">
             Your Assessment <span className="text-gradient-lime">Report</span>
@@ -568,46 +864,71 @@ function Report({
         </button>
       </div>
 
-      <div className="mt-10 grid md:grid-cols-3 gap-4">
-        <ScoreRing label="Overall" value={report.overallScore} />
-        <StatCard
-          label="Objective Accuracy"
-          value={`${correctCount}/${total.toString()}`}
-          icon={Target}
-          sub="MCQ + Code auto-graded"
-        />
-        <StatCard
-          label="Weak Topics"
-          value={String(report.weakTopics.length)}
-          icon={TrendingUp}
-          sub={report.weakTopics.slice(0, 3).join(" · ") || "None identified"}
-        />
+      {/* Score + Radar */}
+      <div className="mt-10 grid lg:grid-cols-[.9fr_1.1fr] gap-6">
+        <div className="glass rounded-3xl p-8 shadow-card relative overflow-hidden">
+          <div className="absolute -top-24 -right-24 h-56 w-56 rounded-full bg-primary/20 blur-3xl pointer-events-none" />
+          <div className="grid grid-cols-2 gap-6 items-center">
+            <BigScoreRing value={report.overallScore} />
+            <div className="space-y-3 text-sm">
+              <MiniStat label="Interview Readiness" value={`${report.interviewReadiness}/100`} />
+              <MiniStat label="Skill Level" value={report.skillLevel} />
+              <MiniStat label="Objective Accuracy" value={`${correctCount}/${total}`} />
+              <MiniStat label="Weak Topics" value={String(report.weakTopics.length)} />
+            </div>
+          </div>
+        </div>
+
+        <div className="glass rounded-3xl p-6 md:p-8 shadow-card">
+          <div className="flex items-center gap-2 mb-4">
+            <TrendingUp className="h-4 w-4 text-primary" />
+            <h3 className="text-sm uppercase tracking-widest text-muted-foreground">Skill radar</h3>
+          </div>
+          <RadarChart data={report.radar} />
+        </div>
       </div>
 
-      <div className="mt-10 grid lg:grid-cols-2 gap-6">
-        <ListCard
-          title="Strengths"
-          items={report.strengths}
-          icon={Check}
+      {/* Strengths / Weaknesses */}
+      <div className="mt-6 grid lg:grid-cols-2 gap-6">
+        <ListCard title="Strengths" items={report.strengths} icon={Check} tone="primary" />
+        <ListCard title="Weaknesses" items={report.weaknesses} icon={X} tone="danger" />
+      </div>
+
+      {/* Companies */}
+      <div className="mt-6 grid lg:grid-cols-2 gap-6">
+        <CompaniesCard
+          title="Ready to interview"
+          companies={report.companiesReady}
           tone="primary"
+          icon={Rocket}
         />
-        <ListCard
-          title="Weaknesses"
-          items={report.weaknesses}
-          icon={X}
+        <CompaniesCard
+          title="Needs improvement"
+          companies={report.companiesNeedsImprovement}
           tone="danger"
+          icon={Flame}
         />
       </div>
 
+      {/* Learning roadmap */}
       <div className="mt-6 glass rounded-3xl p-6 md:p-8 shadow-card">
         <div className="flex items-center gap-2 mb-5">
-          <Lightbulb className="h-5 w-5 text-primary" />
-          <h3 className="text-xl font-semibold tracking-tight">Recommended learning path</h3>
+          <MapIcon className="h-5 w-5 text-primary" />
+          <h3 className="text-xl font-semibold tracking-tight">Personalized learning roadmap</h3>
         </div>
         <div className="grid md:grid-cols-2 gap-3">
           {report.learningPath.map((l, i) => (
-            <div key={i} className="rounded-2xl border border-border/60 bg-surface/40 p-4">
-              <div className="font-semibold">{l.topic}</div>
+            <div
+              key={i}
+              className="rounded-2xl border border-border/60 bg-surface/40 p-4 hover:border-primary/40 transition-colors"
+            >
+              <div className="flex items-center gap-2 text-[11px] text-primary uppercase tracking-widest">
+                <span className="grid h-5 w-5 place-items-center rounded-full bg-primary/15">
+                  {i + 1}
+                </span>
+                Step {i + 1}
+              </div>
+              <div className="mt-2 font-semibold">{l.topic}</div>
               <div className="mt-1 text-sm text-primary">{l.resource}</div>
               <div className="mt-2 text-xs text-muted-foreground leading-relaxed">{l.reason}</div>
             </div>
@@ -615,6 +936,7 @@ function Report({
         </div>
       </div>
 
+      {/* Question review */}
       <div className="mt-10">
         <h3 className="text-xl font-semibold tracking-tight mb-4">Question review</h3>
         <div className="space-y-3">
@@ -655,16 +977,18 @@ function Report({
                       {g.userAnswer || <span className="text-muted-foreground">No answer</span>}
                     </div>
                   </div>
-                  {(q.type === "mcq" || q.type === "code") && q.options && q.correctIndex != null && (
-                    <div>
-                      <div className="text-xs uppercase tracking-widest text-muted-foreground mb-1">
-                        Correct answer
+                  {(q.type === "mcq" || q.type === "code") &&
+                    q.options &&
+                    q.correctIndex != null && (
+                      <div>
+                        <div className="text-xs uppercase tracking-widest text-muted-foreground mb-1">
+                          Correct answer
+                        </div>
+                        <div className="rounded-xl bg-primary/5 border border-primary/20 p-3">
+                          {q.options[q.correctIndex]}
+                        </div>
                       </div>
-                      <div className="rounded-xl bg-primary/5 border border-primary/20 p-3">
-                        {q.options[q.correctIndex]}
-                      </div>
-                    </div>
-                  )}
+                    )}
                   {q.type === "scenario" && q.correctAnswer && (
                     <div>
                       <div className="text-xs uppercase tracking-widest text-muted-foreground mb-1">
@@ -678,7 +1002,8 @@ function Report({
                   {scenario && (
                     <div className="rounded-xl border border-border/60 bg-surface/40 p-3">
                       <div className="text-xs text-muted-foreground">
-                        Scenario score: <span className="text-foreground font-semibold">{scenario.score}/10</span>
+                        Scenario score:{" "}
+                        <span className="text-foreground font-semibold">{scenario.score}/10</span>
                       </div>
                       <div className="mt-1">{scenario.feedback}</div>
                     </div>
@@ -701,31 +1026,123 @@ function Report({
 
 /* ---------------- Bits ---------------- */
 
-function SectionTitle({
+function StepCard({
+  step,
+  title,
   icon: Icon,
-  label,
+  children,
 }: {
+  step: number;
+  title: string;
   icon: React.ComponentType<{ className?: string }>;
-  label: string;
+  children: React.ReactNode;
 }) {
   return (
-    <div className="flex items-center gap-2">
-      <span
-        className="grid h-8 w-8 place-items-center rounded-lg text-primary-foreground"
-        style={{ background: "var(--gradient-lime)" }}
-      >
-        <Icon className="h-4 w-4" />
-      </span>
-      <div className="text-sm font-semibold tracking-tight">{label}</div>
+    <div className="glass rounded-3xl p-6 md:p-7 shadow-card">
+      <div className="flex items-center gap-3">
+        <span
+          className="grid h-9 w-9 place-items-center rounded-xl text-primary-foreground text-sm font-bold shadow-glow"
+          style={{ background: "var(--gradient-lime)" }}
+        >
+          {step}
+        </span>
+        <div className="flex items-center gap-2">
+          <Icon className="h-4 w-4 text-primary" />
+          <h3 className="text-lg font-semibold tracking-tight">{title}</h3>
+        </div>
+      </div>
+      <div className="mt-5">{children}</div>
     </div>
   );
 }
 
-function Row({ label, value }: { label: string; value: string }) {
+function Toggle({
+  label,
+  desc,
+  value,
+  onChange,
+  locked,
+}: {
+  label: string;
+  desc: string;
+  value: boolean;
+  onChange: (v: boolean) => void;
+  locked?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => !locked && onChange(!value)}
+      disabled={locked}
+      className={`text-left rounded-2xl border p-4 transition-all ${
+        value
+          ? "border-primary/50 bg-primary/5"
+          : "border-border/60 bg-surface/40 hover:border-primary/40"
+      } ${locked ? "opacity-90 cursor-default" : ""}`}
+    >
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <div className="text-sm font-semibold">{label}</div>
+          <div className="mt-1 text-xs text-muted-foreground leading-relaxed">{desc}</div>
+        </div>
+        <span
+          className={`mt-1 relative inline-flex h-5 w-9 rounded-full transition-colors ${
+            value ? "" : "bg-surface"
+          }`}
+          style={value ? { background: "var(--gradient-lime)" } : undefined}
+        >
+          <span
+            className={`absolute top-0.5 h-4 w-4 rounded-full bg-background transition-transform ${
+              value ? "translate-x-4" : "translate-x-0.5"
+            }`}
+          />
+        </span>
+      </div>
+    </button>
+  );
+}
+
+function Stat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-2xl border border-border/60 bg-surface/40 p-3">
+      <div className="text-[10px] uppercase tracking-widest text-muted-foreground">{label}</div>
+      <div className="mt-1 font-semibold truncate">{value}</div>
+    </div>
+  );
+}
+
+function MiniStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between rounded-xl bg-surface/40 border border-border/60 px-3 py-2">
+      <span className="text-xs text-muted-foreground">{label}</span>
+      <span className="text-sm font-semibold">{value}</span>
+    </div>
+  );
+}
+
+function FeatureRow({ label, on }: { label: string; on: boolean }) {
   return (
     <div className="flex items-center justify-between">
       <span className="text-muted-foreground">{label}</span>
-      <span className="font-medium text-right">{value}</span>
+      <span
+        className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+          on ? "bg-primary/15 text-primary" : "bg-surface text-muted-foreground"
+        }`}
+      >
+        {on ? <Check className="h-3 w-3" /> : <X className="h-3 w-3" />}
+        {on ? "Included" : "Off"}
+      </span>
+    </div>
+  );
+}
+
+function MixBar({ mix }: { mix: { mcq: number; code: number; scenario: number } }) {
+  const total = Math.max(1, mix.mcq + mix.code + mix.scenario);
+  return (
+    <div className="h-2 w-full overflow-hidden rounded-full bg-surface flex">
+      <div style={{ width: `${(mix.mcq / total) * 100}%`, background: "oklch(0.85 0.19 130)" }} />
+      <div style={{ width: `${(mix.code / total) * 100}%`, background: "oklch(0.72 0.18 200)" }} />
+      <div style={{ width: `${(mix.scenario / total) * 100}%`, background: "oklch(0.65 0.18 320)" }} />
     </div>
   );
 }
@@ -745,66 +1162,142 @@ function TypeBadge({ type }: { type: AssessmentQuestion["type"] }) {
   );
 }
 
-function ScoreRing({ label, value }: { label: string; value: number }) {
+function BigScoreRing({ value }: { value: number }) {
   const v = Math.max(0, Math.min(100, value));
-  const r = 42;
+  const r = 56;
   const c = 2 * Math.PI * r;
   const off = c - (v / 100) * c;
   return (
-    <div className="glass rounded-3xl p-6 shadow-card flex items-center gap-5">
-      <div className="relative h-28 w-28">
-        <svg viewBox="0 0 100 100" className="h-full w-full -rotate-90">
-          <circle cx="50" cy="50" r={r} strokeWidth="8" className="stroke-border/60" fill="none" />
-          <circle
-            cx="50"
-            cy="50"
-            r={r}
-            strokeWidth="8"
-            fill="none"
-            stroke="url(#g)"
-            strokeLinecap="round"
-            strokeDasharray={c}
-            strokeDashoffset={off}
-            className="transition-all duration-700"
-          />
-          <defs>
-            <linearGradient id="g" x1="0" x2="1" y1="0" y2="1">
-              <stop offset="0%" stopColor="oklch(0.85 0.19 130)" />
-              <stop offset="100%" stopColor="oklch(0.72 0.20 145)" />
-            </linearGradient>
-          </defs>
-        </svg>
-        <div className="absolute inset-0 grid place-items-center">
-          <div className="text-3xl font-semibold text-gradient-lime tabular-nums">{v}</div>
+    <div className="relative h-40 w-40 mx-auto">
+      <svg viewBox="0 0 140 140" className="h-full w-full -rotate-90">
+        <circle cx="70" cy="70" r={r} strokeWidth="10" className="stroke-border/60" fill="none" />
+        <circle
+          cx="70"
+          cy="70"
+          r={r}
+          strokeWidth="10"
+          fill="none"
+          stroke="url(#gBig)"
+          strokeLinecap="round"
+          strokeDasharray={c}
+          strokeDashoffset={off}
+          className="transition-all duration-1000"
+        />
+        <defs>
+          <linearGradient id="gBig" x1="0" x2="1" y1="0" y2="1">
+            <stop offset="0%" stopColor="oklch(0.92 0.20 130)" />
+            <stop offset="100%" stopColor="oklch(0.72 0.22 145)" />
+          </linearGradient>
+        </defs>
+      </svg>
+      <div className="absolute inset-0 grid place-items-center">
+        <div className="text-center">
+          <div className="text-5xl font-semibold text-gradient-lime tabular-nums">{v}</div>
+          <div className="text-[10px] uppercase tracking-widest text-muted-foreground mt-1">
+            Overall Score
+          </div>
         </div>
-      </div>
-      <div>
-        <div className="text-xs uppercase tracking-widest text-muted-foreground">{label}</div>
-        <div className="mt-1 text-lg font-semibold">out of 100</div>
       </div>
     </div>
   );
 }
 
-function StatCard({
-  label,
-  value,
-  icon: Icon,
-  sub,
+function RadarChart({
+  data,
 }: {
-  label: string;
-  value: string;
-  icon: React.ComponentType<{ className?: string }>;
-  sub?: string;
+  data: {
+    accuracy: number;
+    problemSolving: number;
+    conceptUnderstanding: number;
+    confidence: number;
+    codingSkill: number;
+    communication: number;
+  };
 }) {
+  const axes = [
+    { key: "accuracy", label: "Accuracy" },
+    { key: "problemSolving", label: "Problem Solving" },
+    { key: "conceptUnderstanding", label: "Concepts" },
+    { key: "codingSkill", label: "Coding" },
+    { key: "confidence", label: "Confidence" },
+    { key: "communication", label: "Communication" },
+  ] as const;
+
+  const size = 280;
+  const cx = size / 2;
+  const cy = size / 2;
+  const rMax = 100;
+
+  const points = axes.map((a, i) => {
+    const angle = (Math.PI * 2 * i) / axes.length - Math.PI / 2;
+    const v = Math.max(0, Math.min(100, data[a.key])) / 100;
+    return {
+      x: cx + Math.cos(angle) * rMax * v,
+      y: cy + Math.sin(angle) * rMax * v,
+      lx: cx + Math.cos(angle) * (rMax + 18),
+      ly: cy + Math.sin(angle) * (rMax + 18),
+      label: a.label,
+      value: Math.round(data[a.key]),
+    };
+  });
+
+  const gridLevels = [0.25, 0.5, 0.75, 1];
+
   return (
-    <div className="glass rounded-3xl p-6 shadow-card">
-      <div className="flex items-center gap-2 text-muted-foreground">
-        <Icon className="h-4 w-4 text-primary" />
-        <span className="text-xs uppercase tracking-widest">{label}</span>
-      </div>
-      <div className="mt-3 text-3xl font-semibold tracking-tight">{value}</div>
-      {sub && <div className="mt-2 text-xs text-muted-foreground truncate">{sub}</div>}
+    <div className="flex items-center justify-center">
+      <svg viewBox={`0 0 ${size} ${size}`} className="w-full max-w-[340px]">
+        {gridLevels.map((lvl) => {
+          const pts = axes.map((_, i) => {
+            const angle = (Math.PI * 2 * i) / axes.length - Math.PI / 2;
+            return `${cx + Math.cos(angle) * rMax * lvl},${cy + Math.sin(angle) * rMax * lvl}`;
+          });
+          return (
+            <polygon
+              key={lvl}
+              points={pts.join(" ")}
+              fill="none"
+              stroke="oklch(1 0 0 / 0.08)"
+              strokeWidth="1"
+            />
+          );
+        })}
+        {axes.map((_, i) => {
+          const angle = (Math.PI * 2 * i) / axes.length - Math.PI / 2;
+          return (
+            <line
+              key={i}
+              x1={cx}
+              y1={cy}
+              x2={cx + Math.cos(angle) * rMax}
+              y2={cy + Math.sin(angle) * rMax}
+              stroke="oklch(1 0 0 / 0.08)"
+            />
+          );
+        })}
+        <polygon
+          points={points.map((p) => `${p.x},${p.y}`).join(" ")}
+          fill="oklch(0.88 0.22 128 / 0.25)"
+          stroke="oklch(0.88 0.22 128)"
+          strokeWidth="2"
+        />
+        {points.map((p) => (
+          <circle key={p.label} cx={p.x} cy={p.y} r="3" fill="oklch(0.92 0.20 130)" />
+        ))}
+        {points.map((p) => (
+          <text
+            key={`l-${p.label}`}
+            x={p.lx}
+            y={p.ly}
+            textAnchor="middle"
+            dominantBaseline="middle"
+            fontSize="10"
+            fill="currentColor"
+            className="fill-muted-foreground"
+          >
+            {p.label} · {p.value}
+          </text>
+        ))}
+      </svg>
     </div>
   );
 }
@@ -833,6 +1326,9 @@ function ListCard({
         <h3 className="text-lg font-semibold tracking-tight">{title}</h3>
       </div>
       <ul className="space-y-2 text-sm">
+        {items.length === 0 && (
+          <li className="text-muted-foreground text-xs">Nothing to show yet.</li>
+        )}
         {items.map((it, i) => (
           <li key={i} className="flex items-start gap-2 text-muted-foreground">
             <span
@@ -844,6 +1340,121 @@ function ListCard({
           </li>
         ))}
       </ul>
+    </div>
+  );
+}
+
+function CompaniesCard({
+  title,
+  companies,
+  tone,
+  icon: Icon,
+}: {
+  title: string;
+  companies: string[];
+  tone: "primary" | "danger";
+  icon: React.ComponentType<{ className?: string }>;
+}) {
+  return (
+    <div className="glass rounded-3xl p-6 shadow-card">
+      <div className="flex items-center gap-2 mb-4">
+        <span
+          className={`grid h-8 w-8 place-items-center rounded-lg ${
+            tone === "primary" ? "bg-primary/15 text-primary" : "bg-destructive/15 text-destructive"
+          }`}
+        >
+          <Icon className="h-4 w-4" />
+        </span>
+        <h3 className="text-lg font-semibold tracking-tight">{title}</h3>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {companies.length === 0 && (
+          <span className="text-xs text-muted-foreground">No companies suggested.</span>
+        )}
+        {companies.map((c) => (
+          <span
+            key={c}
+            className={`rounded-full px-3 py-1.5 text-sm border ${
+              tone === "primary"
+                ? "border-primary/30 bg-primary/5 text-foreground"
+                : "border-destructive/30 bg-destructive/5 text-foreground"
+            }`}
+          >
+            {c}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/* ---------------- Hero illustration ---------------- */
+
+function HeroIllustration() {
+  const chips = ["Java", "React", "Python", "SQL", "Spring", "Node"];
+  return (
+    <div className="relative aspect-[5/4] w-full max-w-lg justify-self-end">
+      <div className="absolute inset-0 rounded-[2rem] glass shadow-card overflow-hidden">
+        <div className="absolute inset-0 bg-hero-glow opacity-70" />
+        <div className="absolute inset-0 bg-grid opacity-30" />
+
+        {/* Laptop frame */}
+        <div className="absolute inset-x-6 top-8 bottom-16 rounded-2xl border border-border/60 bg-black/40 backdrop-blur p-4 font-mono text-[11px] text-muted-foreground overflow-hidden">
+          <div className="flex items-center gap-1.5 mb-3">
+            <span className="h-2 w-2 rounded-full bg-destructive/70" />
+            <span className="h-2 w-2 rounded-full bg-yellow-400/70" />
+            <span className="h-2 w-2 rounded-full bg-primary" />
+            <span className="ml-2 text-[10px]">assessment.tsx</span>
+          </div>
+          <div><span className="text-primary">const</span> skills = <span className="text-primary">await</span> ai.assess({"{"}</div>
+          <div className="pl-3">tech: <span className="text-primary">"React"</span>,</div>
+          <div className="pl-3">difficulty: <span className="text-primary">"hard"</span>,</div>
+          <div className="pl-3">mode: <span className="text-primary">"mixed"</span>,</div>
+          <div>{"}"});</div>
+          <div className="mt-3">
+            <span className="text-primary">✓</span> generated <span className="text-foreground">10</span> questions
+          </div>
+          <div><span className="text-primary">✓</span> adaptive engine ready</div>
+          <div className="mt-3 h-1.5 w-full rounded-full bg-surface overflow-hidden">
+            <div className="h-full w-3/4" style={{ background: "var(--gradient-lime)" }} />
+          </div>
+
+          {/* mini radar */}
+          <div className="mt-3 flex items-center gap-3">
+            <svg viewBox="0 0 60 60" className="h-14 w-14 -rotate-90">
+              <circle cx="30" cy="30" r="22" stroke="oklch(1 0 0 / 0.08)" fill="none" />
+              <circle cx="30" cy="30" r="15" stroke="oklch(1 0 0 / 0.08)" fill="none" />
+              <polygon
+                points="30,10 48,26 42,50 18,50 12,26"
+                fill="oklch(0.88 0.22 128 / 0.3)"
+                stroke="oklch(0.88 0.22 128)"
+                strokeWidth="1.2"
+              />
+            </svg>
+            <div className="text-[10px] leading-relaxed">
+              <div>accuracy · <span className="text-foreground">82</span></div>
+              <div>concepts · <span className="text-foreground">74</span></div>
+              <div>coding · <span className="text-foreground">69</span></div>
+            </div>
+          </div>
+        </div>
+
+        {/* Floating tech chips */}
+        {chips.map((c, i) => (
+          <span
+            key={c}
+            className="absolute glass text-xs px-2.5 py-1 rounded-full text-foreground/90 font-medium animate-float-slow"
+            style={{
+              top: `${10 + (i % 3) * 28}%`,
+              left: i % 2 === 0 ? `${-4 + (i * 6) % 20}%` : undefined,
+              right: i % 2 !== 0 ? `${-4 + (i * 5) % 20}%` : undefined,
+              animationDelay: `${i * 0.6}s`,
+            }}
+          >
+            {c}
+          </span>
+        ))}
+      </div>
     </div>
   );
 }
