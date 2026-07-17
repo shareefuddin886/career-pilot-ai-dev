@@ -1,9 +1,9 @@
 import { createServerFn } from "@tanstack/react-start";
-import { generateObject, NoObjectGeneratedError } from "ai";
+import { generateText } from "ai";
 import { z } from "zod";
 import { createLovableAiGatewayProvider } from "./ai-gateway.server";
 
-const MODEL = "google/gemini-2.5-flash";
+const MODEL = "google/gemini-3-flash-preview";
 
 function getModel() {
   const key = process.env.LOVABLE_API_KEY;
@@ -16,10 +16,10 @@ const QuestionSchema = z.object({
   type: z.enum(["mcq", "code", "scenario"]),
   topic: z.string(),
   prompt: z.string(),
-  code: z.string().nullable(),
-  options: z.array(z.string()).nullable(),
-  correctIndex: z.number().nullable(),
-  correctAnswer: z.string().nullable(),
+  code: z.string().nullable().optional(),
+  options: z.array(z.string()).nullable().optional(),
+  correctIndex: z.number().nullable().optional(),
+  correctAnswer: z.string().nullable().optional(),
   explanation: z.string(),
 });
 
@@ -57,27 +57,43 @@ export const generateAssessment = createServerFn({ method: "POST" })
                 ? "All short MCQs, one line each."
                 : `Mixed: ${data.mix.mcq} MCQ, ${data.mix.code} code, ${data.mix.scenario} scenario.`;
 
+    const ResSchema = z.object({ questions: z.array(QuestionSchema) });
     const run = async () => {
-      const { object } = await generateObject({
+      const { text } = await generateText({
         model: getModel(),
-        schema: z.object({ questions: z.array(QuestionSchema) }),
         system:
-          "You are a senior technical interviewer. Output ONLY valid JSON matching the schema. For MCQ: options length 4, correctIndex 0-3, correctAnswer=null. For code: put snippet in code, options length 4, correctIndex 0-3, correctAnswer=null. For scenario: options=null, correctIndex=null, correctAnswer is a 2-4 sentence model answer. explanation is always required and non-empty.",
+          'You are a senior technical interviewer. Output ONLY a JSON object matching: {"questions":[{"id":string,"type":"mcq"|"code"|"scenario","topic":string,"prompt":string,"code":string|null,"options":string[]|null,"correctIndex":number|null,"correctAnswer":string|null,"explanation":string}]}. For mcq: options length 4, correctIndex 0-3, code=null, correctAnswer=null. For code: put snippet in code (non-null), options length 4, correctIndex 0-3, correctAnswer=null. For scenario: options=null, correctIndex=null, code=null, correctAnswer is a 2-4 sentence model answer. explanation is always required and non-empty. Return ONLY the JSON, no prose, no markdown fences.',
         prompt: `Create ${data.count} ${data.difficulty} questions for ${data.technology}. ${modeHint} Vary topics. Unique short ids q1..q${data.count}.`,
       });
-      return object.questions.slice(0, data.count);
+      const parsed = parseJson(text);
+      const validated = ResSchema.parse(parsed);
+      return validated.questions.slice(0, data.count);
     };
 
     try {
       return await run();
-    } catch (e) {
-      if (NoObjectGeneratedError.isInstance(e)) {
-        // one retry, keep same schema — Gemini occasionally emits invalid JSON
-        return await run();
-      }
-      throw e;
+    } catch {
+      return await run();
     }
   });
+
+function parseJson(text: string): unknown {
+  const cleaned = text
+    .trim()
+    .replace(/^```(?:json)?\s*/i, "")
+    .replace(/```\s*$/i, "")
+    .trim();
+  try {
+    return JSON.parse(cleaned);
+  } catch {
+    const start = cleaned.indexOf("{");
+    const end = cleaned.lastIndexOf("}");
+    if (start !== -1 && end > start) {
+      return JSON.parse(cleaned.slice(start, end + 1));
+    }
+    throw new Error("Model did not return valid JSON");
+  }
+}
 
 const EvalInput = z.object({
   technology: z.string(),
@@ -103,45 +119,39 @@ export const evaluateAssessment = createServerFn({ method: "POST" })
       return { ...a, autoCorrect: correct };
     });
 
-    const { object } = await generateObject({
-      model: getModel(),
-      schema: z.object({
-        scenarioScores: z.array(
-          z.object({
-            id: z.string(),
-            score: z.number().min(0).max(10),
-            feedback: z.string(),
-          })
-        ),
-        overallScore: z.number().min(0).max(100),
-        radar: z.object({
-          accuracy: z.number().min(0).max(100),
-          problemSolving: z.number().min(0).max(100),
-          conceptUnderstanding: z.number().min(0).max(100),
-          confidence: z.number().min(0).max(100),
-          codingSkill: z.number().min(0).max(100),
-          communication: z.number().min(0).max(100),
-        }),
-        interviewReadiness: z.number().min(0).max(100),
-        skillLevel: z.enum(["Beginner", "Intermediate", "Advanced", "Expert"]),
-        companiesReady: z.array(z.string()),
-        companiesNeedsImprovement: z.array(z.string()),
-        strengths: z.array(z.string()),
-        weaknesses: z.array(z.string()),
-        weakTopics: z.array(z.string()),
-        learningPath: z.array(
-          z.object({
-            topic: z.string(),
-            resource: z.string(),
-            reason: z.string(),
-          })
-        ),
-        summary: z.string(),
+    const ReportSchema = z.object({
+      scenarioScores: z.array(
+        z.object({ id: z.string(), score: z.number(), feedback: z.string() })
+      ),
+      overallScore: z.number(),
+      radar: z.object({
+        accuracy: z.number(),
+        problemSolving: z.number(),
+        conceptUnderstanding: z.number(),
+        confidence: z.number(),
+        codingSkill: z.number(),
+        communication: z.number(),
       }),
-      system:
-        "You are a fair but strict technical evaluator producing a rich, actionable report. Score scenarios 0-10 with 1-line feedback. Compute overallScore 0-100. Produce a 6-axis radar (all 0-100). Estimate interviewReadiness 0-100 and a skillLevel bucket. Suggest 3-6 Indian/global companies the candidate is READY for (service+product tiers) and 2-5 that NEED IMPROVEMENT. Return concise, actionable output. Output ONLY valid JSON.",
-      prompt: `Technology: ${data.technology} (${data.difficulty}).\nAnswers:\n${JSON.stringify(items)}\n\nGrade scenarios by id. Combine auto-graded MCQ/code (each 10) with scenario scores for overallScore. Return 2-5 strengths, 2-5 weaknesses, weak topic tags, 3-5 learning-path items (topic, resource, one-line reason).`,
+      interviewReadiness: z.number(),
+      skillLevel: z.enum(["Beginner", "Intermediate", "Advanced", "Expert"]),
+      companiesReady: z.array(z.string()),
+      companiesNeedsImprovement: z.array(z.string()),
+      strengths: z.array(z.string()),
+      weaknesses: z.array(z.string()),
+      weakTopics: z.array(z.string()),
+      learningPath: z.array(
+        z.object({ topic: z.string(), resource: z.string(), reason: z.string() })
+      ),
+      summary: z.string(),
     });
 
+    const { text } = await generateText({
+      model: getModel(),
+      system:
+        'You are a fair but strict technical evaluator. Output ONLY a JSON object with keys: scenarioScores[{id,score(0-10),feedback}], overallScore(0-100), radar{accuracy,problemSolving,conceptUnderstanding,confidence,codingSkill,communication all 0-100}, interviewReadiness(0-100), skillLevel("Beginner"|"Intermediate"|"Advanced"|"Expert"), companiesReady[string], companiesNeedsImprovement[string], strengths[string], weaknesses[string], weakTopics[string], learningPath[{topic,resource,reason}], summary. No prose, no markdown.',
+      prompt: `Technology: ${data.technology} (${data.difficulty}).\nAnswers:\n${JSON.stringify(items)}\n\nGrade scenarios by id. Combine auto-graded MCQ/code (each 10) with scenario scores for overallScore. Return 2-5 strengths, 2-5 weaknesses, weak topic tags, 3-5 learning-path items. Companies: 3-6 ready, 2-5 need improvement.`,
+    });
+
+    const object = ReportSchema.parse(parseJson(text));
     return { grading: items, ...object };
   });
