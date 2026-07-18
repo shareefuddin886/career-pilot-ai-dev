@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Menu, X, Sparkles } from "lucide-react";
+import { Menu, X } from "lucide-react";
 
 const links = [
   { to: "/", label: "Home" },
@@ -24,26 +24,44 @@ export function Navbar() {
   return (
     <header
       className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${
-        scrolled ? "backdrop-blur-xl bg-background/70 border-b border-border/60" : ""
+        scrolled ? "backdrop-blur-xl bg-background/80 border-b border-border/60" : ""
       }`}
     >
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 md:px-8">
-        <Link to="/" className="flex items-center gap-2 group">
-          <span className="grid h-8 w-8 place-items-center rounded-lg bg-gradient-lime shadow-glow" style={{ background: "var(--gradient-lime)" }}>
-            <Sparkles className="h-4 w-4 text-primary-foreground" strokeWidth={2.5} />
+      <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 md:px-8">
+        <Link to="/" className="flex items-center gap-3 group">
+          <span
+            className="grid h-11 w-11 place-items-center rounded-xl text-primary-foreground font-black text-xl tracking-tight shadow-glow"
+            style={{ background: "var(--gradient-gold)", fontFamily: "var(--font-display)" }}
+          >
+            N
           </span>
-          <span className="font-display text-lg font-semibold tracking-tight" style={{ fontFamily: "var(--font-display)" }}>
-            CareerPilot<span className="text-gradient-lime"> AI</span>
+          <span className="flex flex-col leading-tight">
+            <span
+              className="text-xl font-bold tracking-[0.14em] text-foreground"
+              style={{ fontFamily: "var(--font-display)" }}
+            >
+              NEXORAAA
+            </span>
+            <span
+              className="text-[10px] tracking-[0.28em] font-medium"
+              style={{ color: "var(--gold)" }}
+            >
+              AI CAREER PLATFORM
+            </span>
           </span>
         </Link>
 
         <nav className="hidden lg:flex items-center gap-1">
-          {links.slice(1).map((l) => (
+          {links.map((l) => (
             <Link
               key={l.to}
               to={l.to}
-              className="px-3 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors rounded-md"
-              activeProps={{ className: "text-foreground" }}
+              className="relative px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors rounded-md"
+              activeProps={{
+                className:
+                  "text-foreground after:content-[''] after:absolute after:left-3 after:right-3 after:-bottom-0.5 after:h-0.5 after:rounded-full after:bg-[image:var(--gradient-gold)]",
+              }}
+              activeOptions={{ exact: l.to === "/" }}
             >
               {l.label}
             </Link>
@@ -53,10 +71,10 @@ export function Navbar() {
         <div className="hidden lg:flex items-center gap-3">
           <Link
             to="/mock-interview"
-            className="inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium text-primary-foreground transition-transform hover:scale-105 shadow-glow"
-            style={{ background: "var(--gradient-lime)" }}
+            className="inline-flex items-center gap-1.5 rounded-xl px-5 py-2.5 text-sm font-semibold text-primary-foreground transition-transform hover:scale-105 shadow-glow"
+            style={{ background: "var(--gradient-gold)" }}
           >
-            Start Preparing
+            Get Started
           </Link>
         </div>
 
