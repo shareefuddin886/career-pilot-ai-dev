@@ -6,7 +6,7 @@ import {
   MessagesSquare,
   ArrowRight,
   Sparkles,
-  CheckCircle2,
+  PlayCircle,
 } from "lucide-react";
 import heroImg from "@/assets/hero.jpg";
 
@@ -54,20 +54,20 @@ function Index() {
       <div className="pointer-events-none absolute top-40 -right-40 h-96 w-96 rounded-full bg-fuchsia-500/10 blur-3xl animate-float-slower -z-10" />
 
       <section className="mx-auto max-w-7xl px-4 md:px-8 pt-16 pb-24 md:pt-28 md:pb-32">
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
-          <div className="animate-fade-up">
+        <div className="grid lg:grid-cols-[1.05fr_1fr] gap-8 lg:gap-4 items-center">
+          <div className="animate-fade-up relative z-10">
             <span className="inline-flex items-center gap-2 rounded-full glass px-3 py-1.5 text-xs font-medium text-muted-foreground">
               <Sparkles className="h-3.5 w-3.5 text-primary" />
-              AI-powered placement prep
+              AI-Powered Career Platform
             </span>
             <h1 className="mt-6 text-5xl md:text-6xl lg:text-7xl font-semibold leading-[1.05] tracking-tight">
-              Prepare Smarter.
+              Build Your Future.
               <br />
-              Get Placed <span className="text-gradient-lime">Faster.</span>
+              <span className="text-gradient-lime">We Power Your Journey.</span>
             </h1>
             <p className="mt-6 text-lg text-muted-foreground max-w-xl leading-relaxed">
-              Build professional resumes, test your technical skills, practice AI-powered mock
-              interviews, and receive personalized career guidance — all in one platform.
+              Create ATS-ready resumes, evaluate your skills, practice AI mock interviews and
+              get personalized guidance — all in one intelligent platform.
             </p>
             <div className="mt-9 flex flex-wrap gap-3">
               <Link
@@ -75,51 +75,33 @@ function Index() {
                 className="group inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold text-primary-foreground transition-transform hover:scale-[1.03] shadow-glow"
                 style={{ background: "var(--gradient-lime)" }}
               >
-                Start Preparing
+                Get Started
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
               </Link>
               <a
                 href="#features"
-                className="inline-flex items-center gap-2 rounded-full glass px-6 py-3 text-sm font-medium text-foreground hover:bg-surface transition-colors"
+                className="inline-flex items-center gap-2 rounded-full border border-border/60 px-6 py-3 text-sm font-medium text-foreground hover:bg-surface transition-colors"
               >
-                Explore Features
+                Explore Demo
+                <PlayCircle className="h-4 w-4" />
               </a>
-            </div>
-
-            <div className="mt-10 flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
-              {["No signup required", "Gemini-powered", "Built for students"].map((t) => (
-                <span key={t} className="inline-flex items-center gap-1.5">
-                  <CheckCircle2 className="h-4 w-4 text-primary" /> {t}
-                </span>
-              ))}
             </div>
           </div>
 
           <div className="relative animate-fade-up [animation-delay:120ms]">
-            <div className="absolute -inset-6 bg-gradient-to-tr from-primary/20 via-transparent to-fuchsia-500/10 blur-2xl -z-10" />
-            <div className="glass rounded-3xl p-2 shadow-card">
-              <img
-                src={heroImg}
-                alt="AI-powered placement prep dashboard"
-                width={1280}
-                height={1280}
-                className="w-full h-auto rounded-2xl"
-              />
-            </div>
-            <div className="hidden md:block absolute -left-8 top-16 glass rounded-2xl p-4 shadow-card animate-float-slow">
-              <div className="text-xs text-muted-foreground">ATS Score</div>
-              <div className="mt-1 flex items-baseline gap-1">
-                <span className="text-3xl font-semibold text-gradient-lime">92</span>
-                <span className="text-xs text-muted-foreground">/100</span>
-              </div>
-            </div>
-            <div className="hidden md:block absolute -right-6 bottom-10 glass rounded-2xl p-4 shadow-card animate-float-slower">
-              <div className="text-xs text-muted-foreground">Mock Interview</div>
-              <div className="mt-1 text-sm font-medium">Java Developer · Medium</div>
-              <div className="mt-2 h-1.5 w-40 rounded-full bg-surface overflow-hidden">
-                <div className="h-full w-3/4" style={{ background: "var(--gradient-lime)" }} />
-              </div>
-            </div>
+            <img
+              src={heroImg}
+              alt="AI career platform visualization"
+              width={1536}
+              height={1280}
+              className="w-full h-auto select-none pointer-events-none"
+              style={{
+                maskImage:
+                  "radial-gradient(ellipse 70% 70% at 55% 55%, black 45%, transparent 85%)",
+                WebkitMaskImage:
+                  "radial-gradient(ellipse 70% 70% at 55% 55%, black 45%, transparent 85%)",
+              }}
+            />
           </div>
         </div>
       </section>
