@@ -5,10 +5,9 @@ import {
   BrainCircuit,
   MessagesSquare,
   ArrowRight,
-  Sparkles,
-  PlayCircle,
+  UserPlus,
+  LogIn,
 } from "lucide-react";
-import heroImg from "@/assets/hero.jpg";
 
 export const Route = createFileRoute("/")({
   component: Index,
@@ -48,60 +47,157 @@ const features = [
 function Index() {
   return (
     <div className="relative min-h-screen overflow-hidden">
+      {/* Background layers */}
       <div className="pointer-events-none absolute inset-0 -z-10 bg-hero-glow" />
-      <div className="pointer-events-none absolute inset-0 -z-10 bg-grid opacity-40 [mask-image:radial-gradient(ellipse_at_top,black_20%,transparent_70%)]" />
-      <div className="pointer-events-none absolute -top-40 -left-40 h-96 w-96 rounded-full bg-primary/20 blur-3xl animate-float-slow -z-10" />
-      <div className="pointer-events-none absolute top-40 -right-40 h-96 w-96 rounded-full bg-fuchsia-500/10 blur-3xl animate-float-slower -z-10" />
+      <div className="pointer-events-none absolute inset-0 -z-10 bg-grid opacity-30 [mask-image:radial-gradient(ellipse_at_center,black_10%,transparent_65%)]" />
 
-      <section className="mx-auto max-w-7xl px-4 md:px-8 pt-16 pb-24 md:pt-28 md:pb-32">
-        <div className="grid lg:grid-cols-[1.05fr_1fr] gap-8 lg:gap-4 items-center">
-          <div className="animate-fade-up relative z-10">
-            <span className="inline-flex items-center gap-2 rounded-full glass px-3 py-1.5 text-xs font-medium text-muted-foreground">
-              <Sparkles className="h-3.5 w-3.5 text-primary" />
-              AI-Powered Career Platform
-            </span>
-            <h1 className="mt-6 text-5xl md:text-6xl lg:text-7xl font-semibold leading-[1.05] tracking-tight">
-              Build Your Future.
-              <br />
-              <span className="text-gradient-lime">We Power Your Journey.</span>
-            </h1>
-            <p className="mt-6 text-lg text-muted-foreground max-w-xl leading-relaxed">
-              Create ATS-ready resumes, evaluate your skills, practice AI mock interviews and
-              get personalized guidance — all in one intelligent platform.
-            </p>
-            <div className="mt-9 flex flex-wrap gap-3">
-              <Link
-                to="/mock-interview"
-                className="group inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold text-primary-foreground transition-transform hover:scale-[1.03] shadow-glow"
-                style={{ background: "var(--gradient-lime)" }}
-              >
-                Get Started
-                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-              </Link>
-              <a
-                href="#features"
-                className="inline-flex items-center gap-2 rounded-full border border-border/60 px-6 py-3 text-sm font-medium text-foreground hover:bg-surface transition-colors"
-              >
-                Explore Demo
-                <PlayCircle className="h-4 w-4" />
-              </a>
-            </div>
-          </div>
+      {/* Ambient gold light streaks — pure CSS, no images */}
+      <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+        <div
+          className="absolute -left-32 top-10 h-[520px] w-[2px] rotate-[22deg] opacity-70 animate-shimmer"
+          style={{
+            background:
+              "linear-gradient(to bottom, transparent, oklch(0.85 0.15 82 / 0.9), transparent)",
+            filter: "blur(1px)",
+            ["--r" as never]: "22deg",
+          }}
+        />
+        <div
+          className="absolute -left-10 top-40 h-[420px] w-[1px] rotate-[24deg] opacity-40 animate-shimmer"
+          style={{
+            background:
+              "linear-gradient(to bottom, transparent, oklch(0.85 0.15 82 / 0.7), transparent)",
+            animationDelay: "1.4s",
+            ["--r" as never]: "24deg",
+          }}
+        />
+        <div
+          className="absolute -right-32 top-24 h-[480px] w-[2px] -rotate-[22deg] opacity-70 animate-shimmer"
+          style={{
+            background:
+              "linear-gradient(to bottom, transparent, oklch(0.85 0.15 82 / 0.9), transparent)",
+            filter: "blur(1px)",
+            animationDelay: "0.8s",
+            ["--r" as never]: "-22deg",
+          }}
+        />
+        <div
+          className="absolute -right-10 top-56 h-[380px] w-[1px] -rotate-[24deg] opacity-40 animate-shimmer"
+          style={{
+            background:
+              "linear-gradient(to bottom, transparent, oklch(0.85 0.15 82 / 0.7), transparent)",
+            animationDelay: "2.2s",
+            ["--r" as never]: "-24deg",
+          }}
+        />
+        {/* Twinkling star dust */}
+        {[
+          { top: "18%", left: "12%", d: "0s" },
+          { top: "32%", left: "8%", d: "1.2s" },
+          { top: "58%", left: "15%", d: "2.4s" },
+          { top: "24%", left: "88%", d: "0.6s" },
+          { top: "48%", left: "92%", d: "1.8s" },
+          { top: "70%", left: "85%", d: "0.3s" },
+          { top: "76%", left: "20%", d: "2.1s" },
+          { top: "40%", left: "50%", d: "1.5s" },
+        ].map((s, i) => (
+          <span
+            key={i}
+            className="absolute h-1 w-1 rounded-full animate-twinkle"
+            style={{
+              top: s.top,
+              left: s.left,
+              background: "oklch(0.9 0.15 82)",
+              boxShadow: "0 0 8px oklch(0.85 0.15 82 / 0.9)",
+              animationDelay: s.d,
+            }}
+          />
+        ))}
+      </div>
 
-          <div className="relative animate-fade-up [animation-delay:120ms]">
-            <img
-              src={heroImg}
-              alt="AI career platform visualization"
-              width={1536}
-              height={1280}
-              className="w-full h-auto select-none pointer-events-none"
+      {/* HERO */}
+      <section className="relative mx-auto max-w-6xl px-4 md:px-8 pt-16 pb-28 md:pt-24 md:pb-36">
+        <div className="flex flex-col items-center text-center">
+          {/* Ornament */}
+          <div className="animate-fade-in flex items-center gap-4 opacity-80">
+            <span
+              className="h-px w-16 md:w-24"
               style={{
-                maskImage:
-                  "radial-gradient(ellipse 70% 70% at 55% 55%, black 45%, transparent 85%)",
-                WebkitMaskImage:
-                  "radial-gradient(ellipse 70% 70% at 55% 55%, black 45%, transparent 85%)",
+                background:
+                  "linear-gradient(to right, transparent, oklch(0.82 0.14 82 / 0.9))",
               }}
             />
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              className="animate-twinkle"
+              style={{ color: "var(--gold)" }}
+              aria-hidden
+            >
+              <path
+                d="M12 2 L13.5 10.5 L22 12 L13.5 13.5 L12 22 L10.5 13.5 L2 12 L10.5 10.5 Z"
+                fill="currentColor"
+              />
+            </svg>
+            <span
+              className="h-px w-16 md:w-24"
+              style={{
+                background:
+                  "linear-gradient(to left, transparent, oklch(0.82 0.14 82 / 0.9))",
+              }}
+            />
+          </div>
+
+          {/* Brand wordmark */}
+          <h1
+            className="mt-6 animate-fade-up text-6xl md:text-8xl lg:text-9xl font-bold tracking-tight text-gradient-gold"
+            style={{ fontFamily: "var(--font-display)", letterSpacing: "0.02em" }}
+          >
+            NEXORAAA
+          </h1>
+          <p
+            className="mt-3 animate-fade-up [animation-delay:120ms] text-sm md:text-base tracking-[0.42em] text-foreground/85"
+            style={{ fontFamily: "var(--font-sans)" }}
+          >
+            AI CAREER PLATFORM
+          </p>
+
+          {/* Tagline */}
+          <h2
+            className="mt-10 animate-fade-up [animation-delay:220ms] text-2xl md:text-4xl font-semibold tracking-tight max-w-3xl"
+            style={{ fontFamily: "var(--font-sans)" }}
+          >
+            Build Your Resume. Master Your Skills.{" "}
+            <span className="text-gradient-gold">Land Your Dream Job.</span>
+          </h2>
+          <p className="mt-5 animate-fade-up [animation-delay:320ms] text-base md:text-lg text-muted-foreground max-w-2xl leading-relaxed">
+            AI-powered tools to help you create a perfect resume, improve your skills,
+            practice interviews and get personalized career guidance.
+          </p>
+
+          {/* CTAs */}
+          <div className="mt-10 animate-fade-up [animation-delay:420ms] flex flex-col sm:flex-row gap-4">
+            <Link
+              to="/mock-interview"
+              className="group inline-flex items-center justify-center gap-2 rounded-2xl px-8 py-4 text-base font-semibold text-primary-foreground transition-transform hover:scale-[1.03] shadow-glow min-w-[200px]"
+              style={{ background: "var(--gradient-gold)" }}
+            >
+              <LogIn className="h-5 w-5" />
+              Get Started
+              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+            </Link>
+            <a
+              href="#features"
+              className="inline-flex items-center justify-center gap-2 rounded-2xl px-8 py-4 text-base font-semibold text-foreground transition-all min-w-[200px] border hover:scale-[1.03]"
+              style={{
+                background: "oklch(0.22 0.09 265)",
+                borderColor: "oklch(0.82 0.14 82 / 0.35)",
+              }}
+            >
+              <UserPlus className="h-5 w-5" style={{ color: "var(--gold)" }} />
+              Explore Features
+            </a>
           </div>
         </div>
       </section>
@@ -109,15 +205,18 @@ function Index() {
       <section id="features" className="mx-auto max-w-7xl px-4 md:px-8 pb-32">
         <div className="max-w-2xl">
           <span
-            className="text-xs uppercase tracking-widest text-primary"
+            className="text-xs uppercase tracking-[0.28em]"
             style={{ fontFamily: "var(--font-mono)" }}
           >
-            /Features
+            <span style={{ color: "var(--gold)" }}>/</span>Features
           </span>
-          <h2 className="mt-4 text-4xl md:text-5xl font-semibold tracking-tight">
+          <h2
+            className="mt-4 text-4xl md:text-5xl font-semibold tracking-tight"
+            style={{ fontFamily: "var(--font-display)" }}
+          >
             Everything you need to land the offer.
           </h2>
-          <p className="mt-4 text-muted-foreground text-lg">
+          <p className="mt-4 text-muted-foreground text-lg" style={{ fontFamily: "var(--font-sans)" }}>
             Four AI modules that work together — from your first resume draft to your final on-site.
           </p>
         </div>
@@ -131,18 +230,26 @@ function Index() {
             >
               <div
                 className="pointer-events-none absolute -top-24 -right-24 h-56 w-56 rounded-full opacity-0 group-hover:opacity-30 transition-opacity blur-3xl"
-                style={{ background: "var(--gradient-lime)" }}
+                style={{ background: "var(--gradient-gold)" }}
               />
               <div className="relative">
                 <div
                   className="grid h-12 w-12 place-items-center rounded-2xl text-primary-foreground shadow-glow"
-                  style={{ background: "var(--gradient-lime)" }}
+                  style={{ background: "var(--gradient-gold)" }}
                 >
                   <f.icon className="h-6 w-6" strokeWidth={2} />
                 </div>
-                <h3 className="mt-6 text-2xl font-semibold tracking-tight">{f.title}</h3>
+                <h3
+                  className="mt-6 text-2xl font-semibold tracking-tight"
+                  style={{ fontFamily: "var(--font-display)" }}
+                >
+                  {f.title}
+                </h3>
                 <p className="mt-3 text-muted-foreground leading-relaxed">{f.desc}</p>
-                <div className="mt-6 inline-flex items-center gap-1.5 text-sm font-medium text-primary">
+                <div
+                  className="mt-6 inline-flex items-center gap-1.5 text-sm font-medium"
+                  style={{ color: "var(--gold)" }}
+                >
                   {f.cta}
                   <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </div>
@@ -156,17 +263,20 @@ function Index() {
         <div className="relative overflow-hidden rounded-[2rem] glass p-12 md:p-16 text-center shadow-card">
           <div className="pointer-events-none absolute inset-0 bg-hero-glow opacity-60" />
           <div className="relative">
-            <h3 className="text-3xl md:text-5xl font-semibold tracking-tight">
+            <h3
+              className="text-3xl md:text-5xl font-semibold tracking-tight"
+              style={{ fontFamily: "var(--font-display)" }}
+            >
               Your first mock interview is{" "}
-              <span className="text-gradient-lime">one click away.</span>
+              <span className="text-gradient-gold">one click away.</span>
             </h3>
             <p className="mt-4 text-muted-foreground max-w-xl mx-auto">
-              No signup. No credit card. Open the interviewer and start talking.
+              No signup. No credit card. Open the interviewer and start practicing.
             </p>
             <Link
               to="/mock-interview"
               className="mt-8 inline-flex items-center gap-2 rounded-full px-7 py-3.5 text-sm font-semibold text-primary-foreground shadow-glow transition-transform hover:scale-[1.03]"
-              style={{ background: "var(--gradient-lime)" }}
+              style={{ background: "var(--gradient-gold)" }}
             >
               Launch Mock Interview
               <ArrowRight className="h-4 w-4" />
@@ -177,14 +287,14 @@ function Index() {
         <footer className="mt-16 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
           <div className="flex items-center gap-2">
             <span
-              className="grid h-6 w-6 place-items-center rounded-md"
-              style={{ background: "var(--gradient-lime)" }}
+              className="grid h-7 w-7 place-items-center rounded-md font-black text-primary-foreground"
+              style={{ background: "var(--gradient-gold)", fontFamily: "var(--font-display)" }}
             >
-              <Sparkles className="h-3 w-3 text-primary-foreground" />
+              N
             </span>
-            <span>CareerPilot AI — built for placement season.</span>
+            <span>Nexoraaa — the AI career platform built for ambitious students.</span>
           </div>
-          <div>© {new Date().getFullYear()} CareerPilot AI</div>
+          <div>© {new Date().getFullYear()} Nexoraaa</div>
         </footer>
       </section>
     </div>

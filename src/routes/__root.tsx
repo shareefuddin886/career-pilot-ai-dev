@@ -78,9 +78,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "CareerPilot AI — Prepare Smarter. Get Placed Faster." },
-      { name: "description", content: "Build resumes, test skills, and practice AI mock interviews. The AI-powered placement prep platform for students." },
-      { property: "og:title", content: "CareerPilot AI — Prepare Smarter. Get Placed Faster." },
+      { title: "Nexoraaa — AI Career Platform" },
+      { name: "description", content: "Build your resume, master your skills, and land your dream job. Nexoraaa is the AI-powered career platform for ambitious students and professionals." },
+      { property: "og:title", content: "Nexoraaa — AI Career Platform" },
       { property: "og:description", content: "AI resume builder, resume reviewer, skill assessments, and mock interviews — all in one platform." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -95,7 +95,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap",
+        href: "https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap",
       },
     ],
   }),
@@ -125,7 +125,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <Navbar />
-      <main className="pt-16">
+      <main className="pt-20">
         {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
         <Outlet />
       </main>
