@@ -25,6 +25,18 @@ import {
   Zap,
 } from "lucide-react";
 import {
+  Download,
+  RefreshCw,
+  PlayCircle,
+  Route as RouteIcon,
+  Clock,
+  ShieldCheck,
+  Activity,
+  PieChart as PieChartIcon,
+  BarChart3,
+  Brain,
+} from "lucide-react";
+import {
   evaluateAssessment,
   generateAssessment,
   type AssessmentQuestion,
@@ -255,6 +267,8 @@ function SkillAssessmentPage() {
             tech={activeTech}
             diff={diff}
             report={report}
+            count={count}
+            duration={duration}
             onRestart={() => {
               setPhase("setup");
               setReport(null);
