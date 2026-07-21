@@ -1477,13 +1477,19 @@ function RadarChart({
         })}
         <polygon
           points={points.map((p) => `${p.x},${p.y}`).join(" ")}
-          fill="oklch(0.88 0.22 128 / 0.25)"
-          stroke="oklch(0.88 0.22 128)"
+          fill="url(#radarFill)"
+          stroke="oklch(0.72 0.2 285)"
           strokeWidth="2"
         />
         {points.map((p) => (
-          <circle key={p.label} cx={p.x} cy={p.y} r="3" fill="oklch(0.92 0.20 130)" />
+          <circle key={p.label} cx={p.x} cy={p.y} r="3.5" fill="oklch(0.75 0.2 275)" />
         ))}
+        <defs>
+          <linearGradient id="radarFill" x1="0" x2="1" y1="0" y2="1">
+            <stop offset="0%" stopColor="oklch(0.62 0.22 265 / 0.45)" />
+            <stop offset="100%" stopColor="oklch(0.62 0.22 305 / 0.35)" />
+          </linearGradient>
+        </defs>
         {points.map((p) => (
           <text
             key={`l-${p.label}`}
