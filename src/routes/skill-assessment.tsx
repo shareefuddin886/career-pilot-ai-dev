@@ -839,11 +839,15 @@ function Report({
   tech,
   diff,
   report,
+  count,
+  duration,
   onRestart,
 }: {
   tech: string;
   diff: Difficulty;
   report: NonNullable<Awaited<ReturnType<typeof evaluateAssessment>>>;
+  count: number;
+  duration: number;
   onRestart: () => void;
 }) {
   const correctCount = useMemo(
@@ -852,106 +856,289 @@ function Report({
   );
   const total = report.grading.length;
 
+  const codingItems = report.grading.filter(
+    (g) => g.question.type === "code" || g.question.type === "mcq"
+  );
+  const codingCorrect = codingItems.filter((g) => g.autoCorrect).length;
+  const codingAccuracy = codingItems.length
+    ? Math.round((codingCorrect / codingItems.length) * 100)
+    : 0;
+  const avgSecPerQ = count > 0 ? Math.max(1, Math.round((duration * 60) / count)) : 0;
+
+  const distribution = useMemo(() => {
+    const counts = { mcq: 0, code: 0, scenario: 0 };
+    report.grading.forEach((g) => {
+      counts[g.question.type] += 1;
+    });
+    return counts;
+  }, [report]);
+
+  const skipped = report.grading.filter(
+    (g) => !g.userAnswer || g.userAnswer.trim().length === 0
+  ).length;
+  const wrong = total - correctCount - skipped;
+
+  const timeline = useMemo(
+    () =>
+      report.grading.map((g, i) => {
+        const sc = report.scenarioScores.find((s) => s.id === g.question.id);
+        const val =
+          g.question.type === "scenario"
+            ? (sc?.score ?? 0) * 10
+            : g.autoCorrect
+              ? 100
+              : g.userAnswer.trim().length > 0
+                ? 30
+                : 0;
+        return { i: i + 1, val };
+      }),
+    [report]
+  );
+
+  const studyHours = Math.max(2, Math.min(40, report.weakTopics.length * 2 + Math.round((100 - report.overallScore) / 8)));
+
+  const roadmapWeeks = useMemo(() => {
+    const chunks: { week: number; items: typeof report.learningPath }[] = [];
+    const perWeek = Math.max(1, Math.ceil(report.learningPath.length / 4));
+    for (let i = 0; i < report.learningPath.length; i += perWeek) {
+      chunks.push({
+        week: chunks.length + 1,
+        items: report.learningPath.slice(i, i + perWeek),
+      });
+    }
+    return chunks;
+  }, [report]);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -8 }}
-      className="mx-auto max-w-6xl px-4 md:px-8"
+      className="mx-auto max-w-7xl px-4 md:px-8"
     >
-      <div className="flex flex-wrap items-end justify-between gap-4">
+      {/* Hero */}
+      <div className="grid lg:grid-cols-[1.15fr_.85fr] gap-10 items-center">
         <div>
-          <span className="inline-flex items-center gap-2 rounded-full glass px-3 py-1.5 text-xs font-medium text-muted-foreground">
-            <BrainCircuit className="h-3.5 w-3.5 text-primary" />
-            {tech} · {diff} · {report.skillLevel}
-          </span>
-          <h1 className="mt-5 text-4xl md:text-5xl font-semibold tracking-tight">
-            Your Assessment <span className="text-gradient-lime">Report</span>
+          <div className="flex flex-wrap gap-2 mb-6">
+            {[tech, `${diff[0].toUpperCase()}${diff.slice(1)} Difficulty`, "Completed", "AI Generated", "Adaptive Test"].map(
+              (t) => (
+                <span
+                  key={t}
+                  className="inline-flex items-center gap-1.5 rounded-full glass px-3 py-1.5 text-xs font-medium text-muted-foreground"
+                >
+                  <Check className="h-3 w-3 text-primary" />
+                  {t}
+                </span>
+              )
+            )}
+          </div>
+          <h1 className="text-4xl md:text-6xl font-semibold tracking-tight leading-[1.03]">
+            Skill Assessment{" "}
+            <span
+              style={{
+                background:
+                  "linear-gradient(135deg, oklch(0.72 0.18 260), oklch(0.7 0.22 300))",
+                WebkitBackgroundClip: "text",
+                backgroundClip: "text",
+                color: "transparent",
+              }}
+            >
+              Report
+            </span>
           </h1>
-          <p className="mt-3 text-muted-foreground max-w-xl">{report.summary}</p>
+          <p className="mt-5 text-muted-foreground text-lg max-w-xl leading-relaxed">
+            Your AI-powered performance analysis generated from coding questions, MCQs,
+            debugging challenges, and interview scenarios.
+          </p>
         </div>
-        <button
-          onClick={onRestart}
-          className="inline-flex items-center gap-2 rounded-full glass px-5 py-2.5 text-sm font-medium hover:bg-surface"
-        >
-          Take another
-        </button>
+        <HologramIllustration />
       </div>
 
-      {/* Score + Radar */}
-      <div className="mt-10 grid lg:grid-cols-[.9fr_1.1fr] gap-6">
-        <div className="glass rounded-3xl p-8 shadow-card relative overflow-hidden">
-          <div className="absolute -top-24 -right-24 h-56 w-56 rounded-full bg-primary/20 blur-3xl pointer-events-none" />
-          <div className="grid grid-cols-2 gap-6 items-center">
-            <BigScoreRing value={report.overallScore} />
-            <div className="space-y-3 text-sm">
-              <MiniStat label="Interview Readiness" value={`${report.interviewReadiness}/100`} />
-              <MiniStat label="Skill Level" value={report.skillLevel} />
-              <MiniStat label="Objective Accuracy" value={`${correctCount}/${total}`} />
-              <MiniStat label="Weak Topics" value={String(report.weakTopics.length)} />
-            </div>
-          </div>
-        </div>
+      {/* Summary cards */}
+      <div className="mt-14 grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <SummaryCard
+          icon={Gauge}
+          title="Overall Score"
+          value={report.overallScore}
+          suffix={<span className="text-lg text-muted-foreground">/100</span>}
+          trend={report.overallScore >= 80 ? "Excellent" : report.overallScore >= 60 ? "On track" : "Needs work"}
+          tone="blue"
+        />
+        <SummaryCard
+          icon={ShieldCheck}
+          title="Interview Readiness"
+          value={report.interviewReadiness}
+          suffix="%"
+          trend={report.interviewReadiness >= 80 ? "Ready" : "Getting there"}
+          tone="purple"
+        />
+        <SummaryCard
+          icon={Code2}
+          title="Coding Accuracy"
+          value={codingAccuracy}
+          suffix="%"
+          trend={codingAccuracy >= 80 ? "Top 10%" : codingAccuracy >= 60 ? "Solid" : "Practice more"}
+          tone="blue"
+        />
+        <SummaryCard
+          icon={Clock}
+          title="Avg Time"
+          value={avgSecPerQ}
+          suffix={<span className="text-lg text-muted-foreground"> sec/q</span>}
+          trend={avgSecPerQ < 45 ? "Excellent speed" : "Steady pace"}
+          tone="purple"
+        />
+      </div>
 
-        <div className="glass rounded-3xl p-6 md:p-8 shadow-card">
+      {/* Analytics: Radar + Progress bars */}
+      <div className="mt-6 grid lg:grid-cols-2 gap-4">
+        <div className="glass rounded-3xl p-6 md:p-8 shadow-card relative overflow-hidden">
+          <div className="absolute -top-24 -right-24 h-56 w-56 rounded-full bg-[oklch(0.55_0.2_275)]/25 blur-3xl pointer-events-none" />
           <div className="flex items-center gap-2 mb-4">
-            <TrendingUp className="h-4 w-4 text-primary" />
-            <h3 className="text-sm uppercase tracking-widest text-muted-foreground">Skill radar</h3>
+            <Activity className="h-4 w-4 text-[oklch(0.75_0.16_265)]" />
+            <h3 className="text-sm uppercase tracking-widest text-muted-foreground">Skill Radar</h3>
           </div>
           <RadarChart data={report.radar} />
+        </div>
+        <div className="glass rounded-3xl p-6 md:p-8 shadow-card">
+          <div className="flex items-center gap-2 mb-5">
+            <BarChart3 className="h-4 w-4 text-[oklch(0.72_0.18_290)]" />
+            <h3 className="text-sm uppercase tracking-widest text-muted-foreground">Performance Breakdown</h3>
+          </div>
+          <PerformanceBars radar={report.radar} weakTopics={report.weakTopics} />
+        </div>
+      </div>
+
+      {/* AI Analysis */}
+      <div className="mt-6 glass rounded-3xl p-6 md:p-8 shadow-card relative overflow-hidden">
+        <div className="absolute -top-32 -left-32 h-64 w-64 rounded-full bg-[oklch(0.55_0.2_275)]/20 blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-32 -right-32 h-64 w-64 rounded-full bg-[oklch(0.6_0.2_300)]/15 blur-3xl pointer-events-none" />
+        <div className="relative flex items-center gap-3 mb-4">
+          <span
+            className="grid h-10 w-10 place-items-center rounded-xl text-white shadow-glow"
+            style={{ background: "linear-gradient(135deg, oklch(0.6 0.2 265), oklch(0.6 0.22 300))" }}
+          >
+            <Brain className="h-5 w-5" />
+          </span>
+          <div>
+            <h3 className="text-xl font-semibold tracking-tight">AI Performance Summary</h3>
+            <p className="text-xs text-muted-foreground">Generated from your responses</p>
+          </div>
+        </div>
+        <p className="relative text-foreground/85 leading-relaxed max-w-4xl">{report.summary}</p>
+        <div className="relative mt-6 grid sm:grid-cols-3 gap-3">
+          <InsightPill label="Estimated Study Hours" value={`${studyHours} Hours`} />
+          <InsightPill label="Confidence Level" value={`${Math.round(report.radar.confidence)}%`} />
+          <InsightPill label="Interview Prediction" value={report.skillLevel === "Expert" || report.skillLevel === "Advanced" ? "Senior-Level Ready" : report.skillLevel === "Intermediate" ? "Mid-Level Ready" : "Junior-Level Ready"} />
         </div>
       </div>
 
       {/* Strengths / Weaknesses */}
-      <div className="mt-6 grid lg:grid-cols-2 gap-6">
-        <ListCard title="Strengths" items={report.strengths} icon={Check} tone="primary" />
-        <ListCard title="Weaknesses" items={report.weaknesses} icon={X} tone="danger" />
+      <div className="mt-6 grid lg:grid-cols-2 gap-4">
+        <PillsCard title="Strengths" items={report.strengths} tone="success" icon={Check} />
+        <PillsCard title="Improvement Areas" items={report.weaknesses.length ? report.weaknesses : report.weakTopics} tone="warning" icon={X} />
+      </div>
+
+      {/* Question Analytics */}
+      <div className="mt-6 grid lg:grid-cols-[.9fr_1.1fr] gap-4">
+        <div className="glass rounded-3xl p-6 md:p-8 shadow-card">
+          <div className="flex items-center gap-2 mb-4">
+            <PieChartIcon className="h-4 w-4 text-[oklch(0.75_0.16_265)]" />
+            <h3 className="text-sm uppercase tracking-widest text-muted-foreground">Questions Distribution</h3>
+          </div>
+          <Donut distribution={distribution} />
+        </div>
+        <div className="glass rounded-3xl p-6 md:p-8 shadow-card">
+          <div className="flex items-center gap-2 mb-5">
+            <Target className="h-4 w-4 text-[oklch(0.72_0.18_290)]" />
+            <h3 className="text-sm uppercase tracking-widest text-muted-foreground">Statistics</h3>
+          </div>
+          <div className="grid sm:grid-cols-2 gap-3">
+            <StatTile label="Correct" value={correctCount} tone="success" />
+            <StatTile label="Wrong" value={Math.max(0, wrong)} tone="danger" />
+            <StatTile label="Skipped" value={skipped} tone="muted" />
+            <StatTile label="Accuracy" value={`${total ? Math.round((correctCount / total) * 100) : 0}%`} tone="blue" />
+            <StatTile label="Completion Time" value={`${duration}m`} tone="muted" />
+            <StatTile label="Difficulty" value={diff[0].toUpperCase() + diff.slice(1)} tone="purple" />
+          </div>
+        </div>
+      </div>
+
+      {/* Performance Timeline */}
+      <div className="mt-6 glass rounded-3xl p-6 md:p-8 shadow-card">
+        <div className="flex items-center gap-2 mb-5">
+          <TrendingUp className="h-4 w-4 text-[oklch(0.75_0.16_265)]" />
+          <h3 className="text-sm uppercase tracking-widest text-muted-foreground">Performance Timeline</h3>
+        </div>
+        <TimelineChart data={timeline} />
       </div>
 
       {/* Companies */}
-      <div className="mt-6 grid lg:grid-cols-2 gap-6">
-        <CompaniesCard
-          title="Ready to interview"
-          companies={report.companiesReady}
-          tone="primary"
-          icon={Rocket}
-        />
-        <CompaniesCard
-          title="Needs improvement"
-          companies={report.companiesNeedsImprovement}
-          tone="danger"
-          icon={Flame}
-        />
+      <div className="mt-6 grid lg:grid-cols-2 gap-4">
+        <CompaniesCard title="Ready to interview" companies={report.companiesReady} tone="primary" icon={Rocket} />
+        <CompaniesCard title="Needs improvement" companies={report.companiesNeedsImprovement} tone="danger" icon={Flame} />
       </div>
 
-      {/* Learning roadmap */}
+      {/* Learning roadmap - horizontal weeks */}
       <div className="mt-6 glass rounded-3xl p-6 md:p-8 shadow-card">
-        <div className="flex items-center gap-2 mb-5">
-          <MapIcon className="h-5 w-5 text-primary" />
-          <h3 className="text-xl font-semibold tracking-tight">Personalized learning roadmap</h3>
+        <div className="flex items-center gap-2 mb-6">
+          <MapIcon className="h-5 w-5 text-[oklch(0.72_0.18_290)]" />
+          <h3 className="text-xl font-semibold tracking-tight">Personalized Learning Roadmap</h3>
         </div>
-        <div className="grid md:grid-cols-2 gap-3">
-          {report.learningPath.map((l, i) => (
+        <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-4">
+          {roadmapWeeks.map((w) => (
             <div
-              key={i}
-              className="rounded-2xl border border-border/60 bg-surface/40 p-4 hover:border-primary/40 transition-colors"
+              key={w.week}
+              className="group relative rounded-2xl border border-border/60 bg-surface/40 p-5 hover:border-[oklch(0.6_0.2_275)]/60 hover:shadow-glow transition-all"
             >
-              <div className="flex items-center gap-2 text-[11px] text-primary uppercase tracking-widest">
-                <span className="grid h-5 w-5 place-items-center rounded-full bg-primary/15">
-                  {i + 1}
-                </span>
-                Step {i + 1}
+              <div className="absolute inset-x-4 -top-3 h-6 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity"
+                style={{ background: "linear-gradient(90deg, oklch(0.6 0.2 265), oklch(0.6 0.22 300))" }}
+              />
+              <div
+                className="inline-flex items-center gap-2 rounded-full px-3 py-1 text-[11px] font-semibold text-white"
+                style={{ background: "linear-gradient(135deg, oklch(0.55 0.2 265), oklch(0.55 0.22 300))" }}
+              >
+                Week {w.week}
               </div>
-              <div className="mt-2 font-semibold">{l.topic}</div>
-              <div className="mt-1 text-sm text-primary">{l.resource}</div>
-              <div className="mt-2 text-xs text-muted-foreground leading-relaxed">{l.reason}</div>
+              <ul className="mt-4 space-y-3">
+                {w.items.map((it, i) => (
+                  <li key={i}>
+                    <div className="text-sm font-semibold text-foreground/95">{it.topic}</div>
+                    <div className="mt-0.5 text-xs text-[oklch(0.75_0.16_265)]">{it.resource}</div>
+                  </li>
+                ))}
+              </ul>
             </div>
           ))}
         </div>
       </div>
 
+      {/* Actions */}
+      <div className="mt-8 flex flex-wrap gap-3 justify-center">
+        <GradientButton onClick={() => window.print()} icon={Download}>Download Report</GradientButton>
+        <GradientButton onClick={onRestart} icon={RefreshCw} variant="ghost">Retake Assessment</GradientButton>
+        <GradientButton
+          onClick={() => {
+            const el = document.getElementById("roadmap-anchor");
+            el?.scrollIntoView({ behavior: "smooth" });
+          }}
+          icon={RouteIcon}
+          variant="ghost"
+        >
+          View Learning Roadmap
+        </GradientButton>
+        <GradientButton
+          onClick={() => {
+            window.location.href = "/mock-interview";
+          }}
+          icon={PlayCircle}
+        >
+          Start Mock Interview
+        </GradientButton>
+      </div>
+
       {/* Question review */}
-      <div className="mt-10">
+      <div id="roadmap-anchor" className="mt-14">
         <h3 className="text-xl font-semibold tracking-tight mb-4">Question review</h3>
         <div className="space-y-3">
           {report.grading.map((g, i) => {
