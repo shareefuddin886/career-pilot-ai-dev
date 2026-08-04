@@ -986,7 +986,7 @@ function Quiz({
           className="h-full transition-all"
           style={{
             width: `${((current + 1) / questions.length) * 100}%`,
-            background: "var(--gradient-lime)",
+            background: "var(--gradient-gold)",
           }}
         />
       </div>
@@ -1034,7 +1034,7 @@ function Quiz({
                             ? "text-primary-foreground"
                             : "bg-surface text-muted-foreground"
                         }`}
-                        style={selected ? { background: "var(--gradient-lime)" } : undefined}
+                        style={selected ? { background: "var(--gradient-gold)" } : undefined}
                       >
                         {String.fromCharCode(65 + i)}
                       </span>
@@ -1069,7 +1069,7 @@ function Quiz({
                 onClick={onSubmit}
                 disabled={loading}
                 className="inline-flex items-center gap-2 rounded-full px-6 py-2.5 text-sm font-semibold text-primary-foreground shadow-glow disabled:opacity-60"
-                style={{ background: "var(--gradient-lime)" }}
+                style={{ background: "var(--gradient-gold)" }}
               >
                 {loading ? (
                   <>
@@ -1085,7 +1085,7 @@ function Quiz({
               <button
                 onClick={() => setCurrent(Math.min(questions.length - 1, current + 1))}
                 className="inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-glow"
-                style={{ background: "var(--gradient-lime)" }}
+                style={{ background: "var(--gradient-gold)" }}
               >
                 Next <ChevronRight className="h-4 w-4" />
               </button>
@@ -1111,7 +1111,7 @@ function Quiz({
                         ? "border-primary/30 bg-primary/5 text-foreground"
                         : "border-border/60 bg-surface/40 text-muted-foreground hover:text-foreground"
                   }`}
-                  style={isCurrent ? { background: "var(--gradient-lime)" } : undefined}
+                  style={isCurrent ? { background: "var(--gradient-gold)" } : undefined}
                 >
                   {i + 1}
                 </button>
@@ -1537,7 +1537,7 @@ function StepCard({
       <div className="flex items-center gap-3">
         <span
           className="grid h-9 w-9 place-items-center rounded-xl text-primary-foreground text-sm font-bold shadow-glow"
-          style={{ background: "var(--gradient-lime)" }}
+          style={{ background: "var(--gradient-gold)" }}
         >
           {step}
         </span>
@@ -1584,7 +1584,7 @@ function Toggle({
           className={`mt-1 relative inline-flex h-5 w-9 rounded-full transition-colors ${
             value ? "" : "bg-surface"
           }`}
-          style={value ? { background: "var(--gradient-lime)" } : undefined}
+          style={value ? { background: "var(--gradient-gold)" } : undefined}
         >
           <span
             className={`absolute top-0.5 h-4 w-4 rounded-full bg-background transition-transform ${
@@ -2341,7 +2341,7 @@ function HeroIllustration() {
           </div>
           <div><span className="text-primary">✓</span> adaptive engine ready</div>
           <div className="mt-3 h-1.5 w-full rounded-full bg-surface overflow-hidden">
-            <div className="h-full w-3/4" style={{ background: "var(--gradient-lime)" }} />
+            <div className="h-full w-3/4" style={{ background: "var(--gradient-gold)" }} />
           </div>
 
           {/* mini radar */}

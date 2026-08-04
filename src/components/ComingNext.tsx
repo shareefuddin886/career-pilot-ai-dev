@@ -30,7 +30,7 @@ export function ComingNext({
           <div className="flex items-center gap-4">
             <div
               className="grid h-14 w-14 place-items-center rounded-2xl text-primary-foreground shadow-glow"
-              style={{ background: "var(--gradient-lime)" }}
+              style={{ background: "var(--gradient-gold)" }}
             >
               <Icon className="h-7 w-7" strokeWidth={2} />
             </div>

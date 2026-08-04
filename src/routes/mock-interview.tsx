@@ -368,7 +368,7 @@ function SetupView({ onStart }: { onStart: (cfg: InterviewConfig) => void }) {
             disabled={starting || skills.length === 0}
             onClick={handleStart}
             className="group inline-flex items-center gap-2 rounded-full px-6 py-3.5 text-sm font-semibold text-primary-foreground transition-transform hover:scale-[1.02] shadow-glow disabled:opacity-60 disabled:cursor-not-allowed"
-            style={{ background: "var(--gradient-lime)" }}
+            style={{ background: "var(--gradient-gold)" }}
           >
             {starting ? (
               <>
@@ -435,7 +435,7 @@ function TypeCard({
         className={`inline-grid h-10 w-10 place-items-center rounded-xl ${
           selected ? "text-primary-foreground" : "bg-surface-2 text-foreground"
         }`}
-        style={selected ? { background: "var(--gradient-lime)" } : undefined}
+        style={selected ? { background: "var(--gradient-gold)" } : undefined}
       >
         <Icon className="h-5 w-5" strokeWidth={2} />
       </div>
@@ -611,7 +611,7 @@ function SessionView({
             <div className="h-1.5 rounded-full bg-surface overflow-hidden">
               <motion.div
                 className="h-full"
-                style={{ background: "var(--gradient-lime)" }}
+                style={{ background: "var(--gradient-gold)" }}
                 initial={{ width: 0 }}
                 animate={{ width: `${progress}%` }}
                 transition={{ duration: 0.5 }}
@@ -674,7 +674,7 @@ function SessionView({
                 onClick={() => submit(false)}
                 disabled={submitting || answer.trim().length < 3}
                 className="inline-flex items-center gap-2 rounded-full px-6 py-2.5 text-sm font-semibold text-primary-foreground shadow-glow disabled:opacity-60 disabled:cursor-not-allowed"
-                style={{ background: "var(--gradient-lime)" }}
+                style={{ background: "var(--gradient-gold)" }}
               >
                 {submitting ? (
                   <>
@@ -745,7 +745,7 @@ function FeedbackCard({ feedback, onNext }: { feedback: Feedback; onNext: () => 
         <button
           onClick={onNext}
           className="inline-flex items-center gap-2 rounded-full px-6 py-2.5 text-sm font-semibold text-primary-foreground shadow-glow"
-          style={{ background: "var(--gradient-lime)" }}
+          style={{ background: "var(--gradient-gold)" }}
         >
           {feedback.isLast ? "See Final Report" : "Next Question"}
           <ChevronRight className="h-4 w-4" />
@@ -962,7 +962,7 @@ function ResultsView({
         <button
           onClick={onRestart}
           className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold text-primary-foreground shadow-glow"
-          style={{ background: "var(--gradient-lime)" }}
+          style={{ background: "var(--gradient-gold)" }}
         >
           Take Another Interview <ChevronRight className="h-4 w-4" />
         </button>
