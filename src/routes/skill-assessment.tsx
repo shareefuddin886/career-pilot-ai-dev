@@ -323,294 +323,578 @@ function Setup(props: {
     mix, duration, loading, error, onStart,
   } = props;
 
+  const QUESTION_OPTIONS = [5, 10, 15, 20, 25];
+  const AI_FEATURES = [
+    {
+      key: "adaptive",
+      label: "Adaptive Difficulty",
+      desc: "AI adjusts question difficulty based on your live performance.",
+      icon: Gauge,
+      value: adaptive,
+      onChange: setAdaptive,
+      locked: false,
+    },
+    {
+      key: "explanations",
+      label: "AI Explanations",
+      desc: "Detailed reasoning and model answers after every question.",
+      icon: Lightbulb,
+      value: aiExplanations,
+      onChange: setAiExplanations,
+      locked: false,
+    },
+    {
+      key: "roadmap",
+      label: "Learning Roadmap",
+      desc: "A personalized study plan generated from your weak topics.",
+      icon: MapIcon,
+      value: roadmap,
+      onChange: setRoadmap,
+      locked: false,
+    },
+    {
+      key: "readiness",
+      label: "Interview Readiness",
+      desc: "Company-tier readiness score predicted from your results.",
+      icon: ShieldCheck,
+      value: true,
+      onChange: () => {},
+      locked: true,
+    },
+  ];
+
+  const selectedTech = TECHS.find((t) => t.id === tech);
+  const activeMode = MODES.find((m) => m.id === mode)!;
+  const startDisabled = loading || (tech === "__custom" && !customTech.trim());
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -8 }}
-      className="mx-auto max-w-7xl px-4 md:px-8"
+      className="mx-auto w-full max-w-[1280px] px-6 md:px-8"
     >
-      {/* Hero */}
-      <div className="grid lg:grid-cols-[1.1fr_.9fr] gap-10 items-center">
-        <div>
-          <span className="inline-flex items-center gap-2 rounded-full glass px-3 py-1.5 text-xs font-medium text-muted-foreground">
-            <Sparkles className="h-3.5 w-3.5 text-primary" />
-            Adaptive AI Assessment
+      {/* ---------- Hero ---------- */}
+      <section className="grid lg:grid-cols-[1.05fr_.95fr] gap-12 lg:gap-16 items-center">
+        <motion.div
+          initial={{ opacity: 0, x: -24 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+        >
+          <span className="inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary/10 px-3.5 py-1.5 text-xs font-medium text-primary">
+            <Sparkles className="h-3.5 w-3.5" />
+            AI Powered Assessment
           </span>
-          <h1 className="mt-6 text-4xl md:text-6xl font-semibold tracking-tight leading-[1.03]">
-            AI Skill <span className="text-gradient-lime">Assessment</span>
+          <h1 className="mt-6 text-4xl md:text-6xl font-semibold tracking-tight leading-[1.04]">
+            AI Skill <span className="text-gradient-gold">Assessment</span>
           </h1>
-          <p className="mt-5 text-muted-foreground text-lg max-w-xl leading-relaxed">
-            Measure your real technical skills through AI-generated coding, MCQs, debugging
-            challenges and scenario questions. Get an instant performance report and a
-            personalized learning roadmap.
+          <p className="mt-6 max-w-xl text-base md:text-lg leading-relaxed text-muted-foreground">
+            Measure your real technical skills through AI-generated coding questions,
+            debugging challenges, MCQs and interview scenarios. Receive an instant
+            performance report and a personalized learning roadmap.
           </p>
-          <div className="mt-6 flex flex-wrap gap-2 text-xs">
-            {["Adaptive difficulty", "AI explanations", "Weakness analysis", "Learning path"].map((t) => (
-              <span key={t} className="rounded-full glass px-3 py-1.5 text-muted-foreground">
-                {t}
+          <div className="mt-8 flex flex-wrap gap-2">
+            {[
+              { label: "Adaptive Difficulty", icon: Gauge },
+              { label: "AI Explanations", icon: Lightbulb },
+              { label: "Instant Report", icon: Activity },
+              { label: "Weakness Analysis", icon: Target },
+              { label: "Learning Roadmap", icon: MapIcon },
+            ].map((c) => (
+              <span
+                key={c.label}
+                className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-surface/50 px-3 py-1.5 text-xs text-muted-foreground transition-colors duration-300 hover:border-primary/40 hover:text-foreground"
+              >
+                <c.icon className="h-3.5 w-3.5 text-primary" />
+                {c.label}
               </span>
             ))}
           </div>
-        </div>
-        <HeroIllustration />
-      </div>
-
-      {/* Setup grid */}
-      <div className="mt-16 grid lg:grid-cols-[1fr_380px] gap-6">
-        <div className="space-y-6">
-          <StepCard step={1} title="Choose technology" icon={Layers}>
-            <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-3">
-              {TECHS.map((t) => {
-                const active = tech === t.id;
-                return (
-                  <button
-                    key={t.id}
-                    onClick={() => setTech(t.id)}
-                    className={`group relative text-left rounded-2xl border p-4 transition-all overflow-hidden ${
-                      active
-                        ? "border-primary/60 bg-primary/5 shadow-glow"
-                        : "border-border/60 hover:border-primary/40 bg-surface/40"
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <span
-                        className="grid h-10 w-10 place-items-center rounded-xl text-xs font-bold text-primary-foreground shrink-0"
-                        style={{ background: "var(--gradient-lime)" }}
-                      >
-                        {t.badge}
-                      </span>
-                      <div className="min-w-0">
-                        <div className="font-semibold truncate">{t.id}</div>
-                        <div className="text-[11px] text-primary">{t.approx}</div>
-                      </div>
-                    </div>
-                    <div className="mt-3 flex flex-wrap gap-1.5">
-                      {t.topics.slice(0, 4).map((tp) => (
-                        <span key={tp} className="rounded-full bg-surface px-2 py-0.5 text-[10px] text-muted-foreground">
-                          {tp}
-                        </span>
-                      ))}
-                    </div>
-                  </button>
-                );
-              })}
-
-              {/* Other technology */}
-              <button
-                onClick={() => setTech("__custom")}
-                className={`text-left rounded-2xl border-2 border-dashed p-4 transition-all ${
-                  tech === "__custom"
-                    ? "border-primary/60 bg-primary/5"
-                    : "border-border/60 hover:border-primary/40 bg-surface/20"
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <span className="grid h-10 w-10 place-items-center rounded-xl bg-surface text-primary shrink-0">
-                    <Wand2 className="h-4 w-4" />
-                  </span>
-                  <div>
-                    <div className="font-semibold">Other technology</div>
-                    <div className="text-[11px] text-muted-foreground">Type any stack — AI adapts</div>
-                  </div>
-                </div>
-                {tech === "__custom" && (
-                  <input
-                    autoFocus
-                    value={customTech}
-                    onChange={(e) => setCustomTech(e.target.value)}
-                    placeholder="e.g. Kubernetes, Rust, Django"
-                    className="mt-3 w-full rounded-xl border border-border/60 bg-surface/60 px-3 py-2 text-sm outline-none focus:border-primary/60"
-                  />
-                )}
-              </button>
-            </div>
-          </StepCard>
-
-          <StepCard step={2} title="Difficulty" icon={Target}>
-            <div className="grid sm:grid-cols-3 gap-3">
-              {DIFFS.map((d) => {
-                const active = diff === d.id;
-                const Icon = d.icon;
-                return (
-                  <button
-                    key={d.id}
-                    onClick={() => setDiff(d.id)}
-                    className={`rounded-2xl border p-4 text-left transition-all ${
-                      active
-                        ? "border-primary/60 bg-primary/5 shadow-glow"
-                        : "border-border/60 hover:border-primary/40 bg-surface/40"
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <span
-                        className={`grid h-8 w-8 place-items-center rounded-lg ${
-                          active ? "text-primary-foreground" : "bg-surface text-primary"
-                        }`}
-                        style={active ? { background: "var(--gradient-lime)" } : undefined}
-                      >
-                        <Icon className="h-4 w-4" />
-                      </span>
-                      <div className="font-semibold">{d.label}</div>
-                    </div>
-                    <div className="mt-3 text-xs text-primary">{d.hint}</div>
-                    <div className="mt-1 text-xs text-muted-foreground">{d.sub}</div>
-                  </button>
-                );
-              })}
-            </div>
-          </StepCard>
-
-          <StepCard step={3} title="Assessment mode" icon={Cpu}>
-            <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-3">
-              {MODES.map((m) => {
-                const active = mode === m.id;
-                const Icon = m.icon;
-                return (
-                  <button
-                    key={m.id}
-                    onClick={() => setMode(m.id)}
-                    className={`rounded-2xl border p-4 text-left transition-all ${
-                      active
-                        ? "border-primary/60 bg-primary/5 shadow-glow"
-                        : "border-border/60 hover:border-primary/40 bg-surface/40"
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <Icon className={`h-4 w-4 ${active ? "text-primary" : "text-muted-foreground"}`} />
-                      <div className="font-semibold text-sm">{m.label}</div>
-                    </div>
-                    <div className="mt-2 text-xs text-muted-foreground leading-relaxed">{m.desc}</div>
-                  </button>
-                );
-              })}
-            </div>
-          </StepCard>
-
-          <StepCard step={4} title="Number of questions" icon={Gauge}>
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Total questions</span>
-              <span className="font-semibold text-lg tabular-nums text-gradient-lime">{count}</span>
-            </div>
-            <input
-              type="range"
-              min={5}
-              max={20}
-              step={1}
-              value={count}
-              onChange={(e) => setCount(Number(e.target.value))}
-              className="mt-4 w-full accent-[color:var(--primary)]"
-            />
-            <div className="mt-2 flex justify-between text-[11px] text-muted-foreground">
-              <span>5</span><span>10</span><span>15</span><span>20</span>
-            </div>
-            <div className="mt-4 flex items-center gap-2 text-xs text-muted-foreground">
-              <Timer className="h-3.5 w-3.5 text-primary" />
-              Estimated duration: <span className="text-foreground font-medium">{duration} min</span>
-            </div>
-          </StepCard>
-
-          <StepCard step={5} title="AI settings" icon={Sparkles}>
-            <div className="grid sm:grid-cols-2 gap-3">
-              <Toggle
-                label="Adaptive difficulty"
-                desc="AI reweights topics based on your answers"
-                value={adaptive}
-                onChange={setAdaptive}
-              />
-              <Toggle
-                label="AI explanations"
-                desc="Show reasoning after every question"
-                value={aiExplanations}
-                onChange={setAiExplanations}
-              />
-              <Toggle
-                label="Personalized roadmap"
-                desc="Generate a learning plan for weak topics"
-                value={roadmap}
-                onChange={setRoadmap}
-              />
-              <Toggle
-                label="Interview readiness score"
-                desc="Company-tier readiness estimate"
-                value={true}
-                onChange={() => {}}
-                locked
-              />
-            </div>
-          </StepCard>
-        </div>
-
-        {/* Live preview */}
-        <aside className="lg:sticky lg:top-24 h-fit">
-          <div className="glass rounded-3xl p-6 shadow-card relative overflow-hidden">
-            <div className="absolute -top-24 -right-24 h-56 w-56 rounded-full bg-primary/20 blur-3xl pointer-events-none" />
-            <div
-              className="text-xs uppercase tracking-widest text-primary"
-              style={{ fontFamily: "var(--font-mono)" }}
-            >
-              /Live session
-            </div>
-            <h3 className="mt-2 text-2xl font-semibold tracking-tight">
-              {activeTech} · <span className="text-gradient-lime capitalize">{diff}</span>
-            </h3>
-
-            <div className="mt-5 grid grid-cols-2 gap-2">
-              <Stat label="Questions" value={String(count)} />
-              <Stat label="Duration" value={`${duration}m`} />
-              <Stat label="Mode" value={MODES.find((m) => m.id === mode)!.label} />
-              <Stat label="Adaptive" value={adaptive ? "On" : "Off"} />
-            </div>
-
-            <div className="mt-5">
-              <div className="text-[11px] uppercase tracking-widest text-muted-foreground mb-2">
-                Question mix
-              </div>
-              <MixBar mix={mix} />
-              <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-muted-foreground">
-                {mix.mcq > 0 && <span>● MCQ {mix.mcq}</span>}
-                {mix.code > 0 && <span>● Code {mix.code}</span>}
-                {mix.scenario > 0 && <span>● Scenario {mix.scenario}</span>}
-              </div>
-            </div>
-
-            <div className="mt-5 space-y-2 text-xs">
-              <FeatureRow label="Learning roadmap" on={roadmap} />
-              <FeatureRow label="Weakness analysis" on />
-              <FeatureRow label="Strength detection" on />
-              <FeatureRow label="Interview readiness score" on />
-              <FeatureRow label="AI explanations" on={aiExplanations} />
-            </div>
-
-            {error && (
-              <div className="mt-5 rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
-                {error}
-              </div>
-            )}
-
+          <div className="mt-10 flex flex-wrap items-center gap-3">
             <button
               onClick={onStart}
-              disabled={loading || (tech === "__custom" && !customTech.trim())}
-              className="mt-6 w-full inline-flex items-center justify-center gap-2 rounded-full px-6 py-3.5 text-sm font-semibold text-primary-foreground shadow-glow transition-transform hover:scale-[1.02] disabled:opacity-60 disabled:hover:scale-100"
-              style={{ background: "var(--gradient-lime)" }}
+              disabled={startDisabled}
+              className="group inline-flex items-center gap-2 rounded-2xl px-7 py-3.5 text-sm font-semibold text-primary-foreground shadow-glow transition-all duration-300 hover:-translate-y-1 disabled:opacity-60 disabled:hover:translate-y-0"
+              style={{ background: "var(--gradient-gold)" }}
             >
               {loading ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin" /> Generating your assessment…
+                  <Loader2 className="h-4 w-4 animate-spin" /> Generating…
                 </>
               ) : (
                 <>
-                  Start Assessment <ChevronRight className="h-4 w-4" />
+                  Start Assessment
+                  <ChevronRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-0.5" />
                 </>
               )}
             </button>
-            <p className="mt-3 text-[11px] text-muted-foreground text-center">
-              Powered by Gemini · Every question generated fresh
-            </p>
+            <a
+              href="#assessment-summary"
+              className="inline-flex items-center gap-2 rounded-2xl border border-border/70 bg-surface/40 px-6 py-3.5 text-sm font-semibold text-foreground/90 transition-all duration-300 hover:-translate-y-1 hover:border-primary/40"
+            >
+              <PieChartIcon className="h-4 w-4 text-primary" />
+              View Sample Report
+            </a>
           </div>
-        </aside>
-      </div>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, x: 24 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.6, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+        >
+          <HeroIllustration />
+        </motion.div>
+      </section>
+
+      {/* ---------- Technology ---------- */}
+      <Section
+        id="technology"
+        eyebrow="Step 01"
+        title="Choose Your Technology"
+        subtitle="Select the technology you want to be assessed on."
+      >
+        <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-5">
+          {TECHS.map((t, i) => {
+            const active = tech === t.id;
+            return (
+              <motion.button
+                key={t.id}
+                initial={{ opacity: 0, y: 16 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-60px" }}
+                transition={{ duration: 0.45, delay: Math.min(i, 8) * 0.04 }}
+                onClick={() => setTech(t.id)}
+                className={`group relative flex h-full flex-col overflow-hidden rounded-[20px] border p-5 text-left transition-all duration-300 hover:-translate-y-1.5 ${
+                  active
+                    ? "border-primary/60 bg-primary/[0.06] shadow-glow"
+                    : "border-border/60 bg-surface/40 hover:border-primary/35 hover:shadow-card"
+                }`}
+              >
+                {active && (
+                  <span className="absolute right-4 top-4 grid h-6 w-6 place-items-center rounded-full bg-primary text-primary-foreground">
+                    <Check className="h-3.5 w-3.5" />
+                  </span>
+                )}
+                <div className="flex items-center gap-3">
+                  <span
+                    className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl text-sm font-bold"
+                    style={{
+                      background: `color-mix(in oklab, ${t.accent} 18%, transparent)`,
+                      color: t.accent,
+                      border: `1px solid color-mix(in oklab, ${t.accent} 35%, transparent)`,
+                    }}
+                  >
+                    {t.badge}
+                  </span>
+                  <div className="min-w-0">
+                    <div className="truncate font-semibold">{t.id}</div>
+                    <div className="text-[11px] text-muted-foreground">{t.approx}</div>
+                  </div>
+                </div>
+
+                <div className="mt-4 flex flex-wrap gap-1.5">
+                  {t.topics.slice(0, 4).map((tp) => (
+                    <span
+                      key={tp}
+                      className="rounded-lg border border-border/50 bg-background/40 px-2 py-1 text-[10px] text-muted-foreground"
+                    >
+                      {tp}
+                    </span>
+                  ))}
+                </div>
+
+                <div className="mt-auto pt-5">
+                  <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+                    <span className="inline-flex items-center gap-1.5">
+                      <Clock className="h-3 w-3" />
+                      {estimateDuration(count, diff, mode)} min
+                    </span>
+                    <span className="font-medium text-foreground/80">{t.coverage}% coverage</span>
+                  </div>
+                  <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-background/60">
+                    <div
+                      className="h-full rounded-full transition-all duration-500"
+                      style={{ width: `${t.coverage}%`, background: t.accent }}
+                    />
+                  </div>
+                </div>
+              </motion.button>
+            );
+          })}
+
+          <motion.button
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.45 }}
+            onClick={() => setTech("__custom")}
+            className={`flex h-full flex-col rounded-[20px] border-2 border-dashed p-5 text-left transition-all duration-300 hover:-translate-y-1.5 ${
+              tech === "__custom"
+                ? "border-primary/60 bg-primary/[0.06]"
+                : "border-border/60 bg-surface/20 hover:border-primary/40"
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-surface text-primary">
+                <Wand2 className="h-4 w-4" />
+              </span>
+              <div>
+                <div className="font-semibold">Other technology</div>
+                <div className="text-[11px] text-muted-foreground">Type any stack — AI adapts</div>
+              </div>
+            </div>
+            {tech === "__custom" && (
+              <input
+                autoFocus
+                value={customTech}
+                onChange={(e) => setCustomTech(e.target.value)}
+                placeholder="e.g. Kubernetes, Rust, Django"
+                className="mt-4 w-full rounded-xl border border-border/60 bg-background/50 px-3 py-2 text-sm outline-none focus:border-primary/60"
+              />
+            )}
+          </motion.button>
+        </div>
+      </Section>
+
+      {/* ---------- Difficulty ---------- */}
+      <Section
+        eyebrow="Step 02"
+        title="Select Difficulty"
+        subtitle="Choose the difficulty level of the assessment."
+      >
+        <div className="grid md:grid-cols-3 gap-5">
+          {DIFFS.map((d, i) => {
+            const active = diff === d.id;
+            const Icon = d.icon;
+            return (
+              <motion.button
+                key={d.id}
+                initial={{ opacity: 0, y: 16 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.45, delay: i * 0.06 }}
+                onClick={() => setDiff(d.id)}
+                className={`relative flex h-full flex-col rounded-[20px] border p-6 text-left transition-all duration-300 hover:-translate-y-1.5 ${
+                  active
+                    ? "border-primary/60 bg-primary/[0.06] shadow-glow"
+                    : "border-border/60 bg-surface/40 hover:border-primary/35 hover:shadow-card"
+                }`}
+              >
+                {d.id === "medium" && (
+                  <span className="absolute -top-2.5 left-6 rounded-full bg-primary px-2.5 py-0.5 text-[10px] font-semibold text-primary-foreground">
+                    Most Popular
+                  </span>
+                )}
+                {active && (
+                  <span className="absolute right-5 top-5 grid h-6 w-6 place-items-center rounded-full bg-primary text-primary-foreground">
+                    <Check className="h-3.5 w-3.5" />
+                  </span>
+                )}
+                <div className="flex items-center gap-3">
+                  <span
+                    className={`grid h-10 w-10 place-items-center rounded-xl ${
+                      active ? "text-primary-foreground" : "bg-surface text-primary"
+                    }`}
+                    style={active ? { background: "var(--gradient-gold)" } : undefined}
+                  >
+                    <Icon className="h-4 w-4" />
+                  </span>
+                  <div>
+                    <div className="text-lg font-semibold">{d.label}</div>
+                    <div className="text-[11px] text-primary">{d.hint}</div>
+                  </div>
+                </div>
+                <p className="mt-4 text-sm leading-relaxed text-muted-foreground">{d.sub}</p>
+                <div className="mt-auto flex items-center justify-between pt-6 text-[11px] text-muted-foreground">
+                  <span className="inline-flex items-center gap-1.5">
+                    <Clock className="h-3 w-3" /> {d.time}
+                  </span>
+                  <span>{d.bestFor}</span>
+                </div>
+              </motion.button>
+            );
+          })}
+        </div>
+      </Section>
+
+      {/* ---------- Mode ---------- */}
+      <Section
+        eyebrow="Step 03"
+        title="Assessment Mode"
+        subtitle="Select the type of assessment you want to take."
+      >
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          {MODES.map((m, i) => {
+            const active = mode === m.id;
+            const Icon = m.icon;
+            return (
+              <motion.button
+                key={m.id}
+                initial={{ opacity: 0, y: 16 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.45, delay: i * 0.05 }}
+                onClick={() => setMode(m.id)}
+                className={`relative flex h-full flex-col rounded-[20px] border p-5 text-left transition-all duration-300 hover:-translate-y-1.5 ${
+                  active
+                    ? "border-primary/60 bg-primary/[0.06] shadow-glow"
+                    : "border-border/60 bg-surface/40 hover:border-primary/35 hover:shadow-card"
+                }`}
+              >
+                {m.id === "mixed" && (
+                  <span className="absolute -top-2.5 left-5 rounded-full bg-primary px-2.5 py-0.5 text-[10px] font-semibold text-primary-foreground">
+                    Most Popular
+                  </span>
+                )}
+                <div className="flex items-center gap-2.5">
+                  <Icon className={`h-4.5 w-4.5 ${active ? "text-primary" : "text-muted-foreground"}`} />
+                  <div className="font-semibold">{m.label}</div>
+                </div>
+                <p className="mt-2.5 text-xs leading-relaxed text-muted-foreground">{m.desc}</p>
+                <div className="mt-auto pt-5">
+                  <MixBar mix={computeMix(m.id, count, diff)} />
+                  <div className="mt-2 text-[11px] text-muted-foreground">{m.split}</div>
+                </div>
+              </motion.button>
+            );
+          })}
+        </div>
+      </Section>
+
+      {/* ---------- Questions ---------- */}
+      <Section
+        eyebrow="Step 04"
+        title="Number of Questions"
+        subtitle="Select how many questions your assessment should contain."
+      >
+        <div className="rounded-[22px] border border-border/60 bg-surface/40 p-6 md:p-8">
+          <div className="flex flex-wrap gap-3">
+            {QUESTION_OPTIONS.map((n) => {
+              const active = count === n;
+              return (
+                <button
+                  key={n}
+                  onClick={() => setCount(n)}
+                  className={`h-14 w-20 rounded-2xl border text-lg font-semibold tabular-nums transition-all duration-300 hover:-translate-y-1 ${
+                    active
+                      ? "border-primary/70 text-primary-foreground shadow-glow"
+                      : "border-border/60 bg-background/40 text-foreground/80 hover:border-primary/40"
+                  }`}
+                  style={active ? { background: "var(--gradient-gold)" } : undefined}
+                >
+                  {n}
+                </button>
+              );
+            })}
+          </div>
+          <div className="mt-7 grid sm:grid-cols-3 gap-4">
+            <MiniStat label="Estimated duration" value={`${duration} min`} />
+            <MiniStat
+              label="Avg. time / question"
+              value={`${Math.round((duration * 60) / Math.max(1, count))} sec`}
+            />
+            <MiniStat label="Difficulty scaling" value={adaptive ? "Adaptive" : "Fixed"} />
+          </div>
+        </div>
+      </Section>
+
+      {/* ---------- AI features ---------- */}
+      <Section
+        eyebrow="Step 05"
+        title="AI Features"
+        subtitle="Enable the AI capabilities you want during and after the assessment."
+      >
+        <div className="grid sm:grid-cols-2 xl:grid-cols-4 gap-5">
+          {AI_FEATURES.map((f, i) => {
+            const Icon = f.icon;
+            return (
+              <motion.button
+                key={f.key}
+                type="button"
+                initial={{ opacity: 0, y: 16 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.45, delay: i * 0.05 }}
+                onClick={() => !f.locked && f.onChange(!f.value)}
+                className={`relative flex h-full flex-col overflow-hidden rounded-[20px] border p-5 text-left transition-all duration-300 hover:-translate-y-1.5 ${
+                  f.value
+                    ? "border-primary/45 bg-primary/[0.05]"
+                    : "border-border/60 bg-surface/40 hover:border-primary/35"
+                } ${f.locked ? "cursor-default" : ""}`}
+              >
+                <div
+                  className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full blur-3xl"
+                  style={{ background: "oklch(0.6 0.18 255 / 0.18)" }}
+                />
+                <div className="flex items-start justify-between gap-3">
+                  <span className="grid h-10 w-10 place-items-center rounded-xl bg-background/50 text-primary">
+                    <Icon className="h-4 w-4" />
+                  </span>
+                  <span
+                    className={`relative inline-flex h-5 w-9 shrink-0 rounded-full transition-colors ${
+                      f.value ? "" : "bg-surface"
+                    }`}
+                    style={f.value ? { background: "var(--gradient-gold)" } : undefined}
+                  >
+                    <span
+                      className={`absolute top-0.5 h-4 w-4 rounded-full bg-background transition-transform duration-300 ${
+                        f.value ? "translate-x-4" : "translate-x-0.5"
+                      }`}
+                    />
+                  </span>
+                </div>
+                <div className="mt-4 font-semibold">{f.label}</div>
+                <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">{f.desc}</p>
+              </motion.button>
+            );
+          })}
+        </div>
+      </Section>
+
+      {/* ---------- Summary ---------- */}
+      <Section
+        id="assessment-summary"
+        eyebrow="Step 06"
+        title="Assessment Summary"
+        subtitle="Review your configuration before starting."
+      >
+        <motion.div
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+          className="rounded-[22px] border border-border/60 bg-surface/40 p-6 md:p-7"
+        >
+          <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-4">
+            <SummaryItem icon={Layers} label="Technology" value={activeTech} />
+            <SummaryItem icon={Target} label="Difficulty" value={diff} capitalize />
+            <SummaryItem icon={Cpu} label="Mode" value={activeMode.label} />
+            <SummaryItem icon={BarChart3} label="Questions" value={String(count)} />
+            <SummaryItem icon={Clock} label="Duration" value={`${duration} min`} />
+            <SummaryItem icon={Gauge} label="Adaptive" value={adaptive ? "Enabled" : "Off"} />
+            <SummaryItem icon={Activity} label="Report" value="Included" />
+            <SummaryItem icon={MapIcon} label="Roadmap" value={roadmap ? "Included" : "Off"} />
+          </div>
+
+          <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2 border-t border-border/50 pt-5 text-xs text-muted-foreground">
+            <span className="inline-flex items-center gap-1.5">
+              <Check className="h-3.5 w-3.5 text-primary" /> Instant report
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <Check className="h-3.5 w-3.5 text-primary" /> AI explanations
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <Check className="h-3.5 w-3.5 text-primary" /> Weakness analysis
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <Check className="h-3.5 w-3.5 text-primary" /> Interview readiness score
+            </span>
+            {selectedTech && (
+              <span className="inline-flex items-center gap-1.5">
+                <Check className="h-3.5 w-3.5 text-primary" /> {selectedTech.approx} covered
+              </span>
+            )}
+          </div>
+        </motion.div>
+
+        {error && (
+          <div className="mt-6 rounded-2xl border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
+            {error}
+          </div>
+        )}
+
+        {/* Final CTA */}
+        <div className="mt-10 flex flex-col items-center">
+          <button
+            onClick={onStart}
+            disabled={startDisabled}
+            className="group relative w-full max-w-2xl overflow-hidden rounded-[22px] px-8 py-6 text-center text-primary-foreground shadow-glow transition-all duration-300 hover:scale-[1.015] disabled:opacity-60 disabled:hover:scale-100"
+            style={{ background: "var(--gradient-gold)" }}
+          >
+            <span className="pointer-events-none absolute inset-0 -translate-x-full bg-white/20 transition-transform duration-700 group-hover:translate-x-full" />
+            <span className="relative flex items-center justify-center gap-2 text-xl font-semibold">
+              {loading ? (
+                <>
+                  <Loader2 className="h-5 w-5 animate-spin" /> Generating your assessment…
+                </>
+              ) : (
+                <>
+                  <Rocket className="h-5 w-5" /> Start AI Assessment
+                  <ChevronRight className="h-5 w-5 transition-transform duration-300 group-hover:translate-x-1" />
+                </>
+              )}
+            </span>
+            <span className="relative mt-1 block text-sm opacity-80">
+              Begin your interview preparation journey.
+            </span>
+          </button>
+          <p className="mt-4 text-xs text-muted-foreground">
+            Powered by Gemini · Every question generated fresh · Takes ~{duration} min
+          </p>
+        </div>
+      </Section>
     </motion.div>
+  );
+}
+
+function Section({
+  id,
+  eyebrow,
+  title,
+  subtitle,
+  children,
+}: {
+  id?: string;
+  eyebrow: string;
+  title: string;
+  subtitle: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section id={id} className="scroll-mt-28 pt-20 md:pt-28">
+      <motion.div
+        initial={{ opacity: 0, y: 14 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-80px" }}
+        transition={{ duration: 0.5 }}
+        className="mb-8"
+      >
+        <div
+          className="text-[11px] uppercase tracking-[0.2em] text-primary"
+          style={{ fontFamily: "var(--font-mono)" }}
+        >
+          {eyebrow}
+        </div>
+        <h2 className="mt-2 text-2xl md:text-3xl font-semibold tracking-tight">{title}</h2>
+        <p className="mt-2 text-sm text-muted-foreground">{subtitle}</p>
+      </motion.div>
+      {children}
+    </section>
+  );
+}
+
+function SummaryItem({
+  icon: Icon,
+  label,
+  value,
+  capitalize,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  label: string;
+  value: string;
+  capitalize?: boolean;
+}) {
+  return (
+    <div className="flex items-center gap-3 rounded-2xl border border-border/50 bg-background/30 px-3.5 py-3">
+      <Icon className="h-4 w-4 shrink-0 text-primary" />
+      <div className="min-w-0">
+        <div className="text-[10px] uppercase tracking-widest text-muted-foreground">{label}</div>
+        <div className={`truncate text-sm font-semibold ${capitalize ? "capitalize" : ""}`}>
+          {value}
+        </div>
+      </div>
+    </div>
   );
 }
 
