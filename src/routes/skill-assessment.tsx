@@ -2345,7 +2345,7 @@ function HeroIllustration() {
           </div>
 
           <pre
-            className="overflow-hidden px-4 py-4 text-[11px] leading-[1.7] text-muted-foreground"
+            className="overflow-hidden whitespace-pre-wrap px-4 py-4 text-[10.5px] leading-[1.75] text-muted-foreground"
             style={{ fontFamily: "var(--font-mono)" }}
           >
 {`public class Solution {
