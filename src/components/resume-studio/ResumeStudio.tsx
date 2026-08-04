@@ -223,7 +223,7 @@ export default function ResumeStudio() {
                     disabled={step === STEPS.length - 1}
                     onClick={() => setStep((s) => Math.min(STEPS.length - 1, s + 1))}
                     className="inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium text-primary-foreground shadow-glow disabled:opacity-40"
-                    style={{ background: "var(--gradient-lime)" }}
+                    style={{ background: "var(--gradient-gold)" }}
                   >
                     Next <ChevronRight className="h-4 w-4" />
                   </button>
@@ -283,7 +283,7 @@ export default function ResumeStudio() {
             </div>
 
             <div className="mt-4 flex flex-wrap gap-2 print:hidden">
-              <button onClick={printResume} className="inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium text-primary-foreground shadow-glow" style={{ background: "var(--gradient-lime)" }}>
+              <button onClick={printResume} className="inline-flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium text-primary-foreground shadow-glow" style={{ background: "var(--gradient-gold)" }}>
                 <Download className="h-4 w-4" /> Download PDF
               </button>
               <button onClick={printResume} className="inline-flex items-center gap-1.5 rounded-full glass px-4 py-2 text-sm">
@@ -428,7 +428,7 @@ function ImproveButton({
       onClick={onClick}
       disabled={loading}
       className="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-medium text-primary-foreground shadow-glow disabled:opacity-60"
-      style={{ background: "var(--gradient-lime)" }}
+      style={{ background: "var(--gradient-gold)" }}
     >
       {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
       Improve with AI
@@ -459,7 +459,7 @@ function DiffPanel({
         <button onClick={onReject} className="inline-flex items-center gap-1 rounded-full glass px-3 py-1.5 text-xs">
           <X className="h-3.5 w-3.5" /> Reject
         </button>
-        <button onClick={onAccept} className="inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium text-primary-foreground shadow-glow" style={{ background: "var(--gradient-lime)" }}>
+        <button onClick={onAccept} className="inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-medium text-primary-foreground shadow-glow" style={{ background: "var(--gradient-gold)" }}>
           <Check className="h-3.5 w-3.5" /> Accept
         </button>
       </div>
@@ -574,7 +574,7 @@ function SkillsStep({ data, setData }: { data: ResumeData; setData: (u: (d: Resu
                 initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }}
                 onClick={() => remove(s)}
                 className="inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium text-primary-foreground shadow-glow"
-                style={{ background: "var(--gradient-lime)" }}
+                style={{ background: "var(--gradient-gold)" }}
               >
                 {s} <X className="h-3 w-3 opacity-80" />
               </motion.button>
@@ -596,7 +596,7 @@ function SkillsStep({ data, setData }: { data: ResumeData; setData: (u: (d: Resu
           </button>
         ))}
         {query && !SKILL_LIBRARY.some((s) => s.toLowerCase() === query.toLowerCase()) && (
-          <button onClick={() => add(query)} className="rounded-full px-3 py-1 text-xs font-medium text-primary-foreground" style={{ background: "var(--gradient-lime)" }}>
+          <button onClick={() => add(query)} className="rounded-full px-3 py-1 text-xs font-medium text-primary-foreground" style={{ background: "var(--gradient-gold)" }}>
             + Add "{query}"
           </button>
         )}
@@ -749,7 +749,7 @@ function ExperienceCard({
             onClick={run}
             disabled={loading}
             className="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-medium text-primary-foreground shadow-glow disabled:opacity-60"
-            style={{ background: "var(--gradient-lime)" }}
+            style={{ background: "var(--gradient-gold)" }}
           >
             {loading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Wand2 className="h-3.5 w-3.5" />}
             Enhance using AI
