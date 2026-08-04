@@ -2316,69 +2316,144 @@ function HologramIllustration() {
 /* ---------------- Hero illustration ---------------- */
 
 function HeroIllustration() {
-  const chips = ["Java", "React", "Python", "SQL", "Spring", "Node"];
   return (
-    <div className="relative aspect-[5/4] w-full max-w-lg justify-self-end">
-      <div className="absolute inset-0 rounded-[2rem] glass shadow-card overflow-hidden">
-        <div className="absolute inset-0 bg-hero-glow opacity-70" />
-        <div className="absolute inset-0 bg-grid opacity-30" />
+    <div className="relative w-full">
+      <div
+        className="pointer-events-none absolute -inset-8 -z-10 rounded-[3rem] blur-3xl"
+        style={{
+          background:
+            "radial-gradient(ellipse 60% 60% at 30% 30%, oklch(0.82 0.14 82 / 0.18), transparent 70%), radial-gradient(ellipse 60% 60% at 80% 70%, oklch(0.6 0.18 255 / 0.16), transparent 70%)",
+        }}
+      />
 
-        {/* Laptop frame */}
-        <div className="absolute inset-x-6 top-8 bottom-16 rounded-2xl border border-border/60 bg-black/40 backdrop-blur p-4 font-mono text-[11px] text-muted-foreground overflow-hidden">
-          <div className="flex items-center gap-1.5 mb-3">
-            <span className="h-2 w-2 rounded-full bg-destructive/70" />
-            <span className="h-2 w-2 rounded-full bg-yellow-400/70" />
-            <span className="h-2 w-2 rounded-full bg-primary" />
-            <span className="ml-2 text-[10px]">assessment.tsx</span>
-          </div>
-          <div><span className="text-primary">const</span> skills = <span className="text-primary">await</span> ai.assess({"{"}</div>
-          <div className="pl-3">tech: <span className="text-primary">"React"</span>,</div>
-          <div className="pl-3">difficulty: <span className="text-primary">"hard"</span>,</div>
-          <div className="pl-3">mode: <span className="text-primary">"mixed"</span>,</div>
-          <div>{"}"});</div>
-          <div className="mt-3">
-            <span className="text-primary">✓</span> generated <span className="text-foreground">10</span> questions
-          </div>
-          <div><span className="text-primary">✓</span> adaptive engine ready</div>
-          <div className="mt-3 h-1.5 w-full rounded-full bg-surface overflow-hidden">
-            <div className="h-full w-3/4" style={{ background: "var(--gradient-gold)" }} />
+      <div className="grid grid-cols-[1.55fr_1fr] gap-4">
+        {/* Editor */}
+        <div className="overflow-hidden rounded-[20px] border border-border/60 bg-background/70 shadow-card backdrop-blur">
+          <div className="flex items-center gap-2 border-b border-border/50 bg-surface/60 px-4 py-2.5">
+            <span className="h-2.5 w-2.5 rounded-full bg-destructive/70" />
+            <span className="h-2.5 w-2.5 rounded-full bg-yellow-400/70" />
+            <span className="h-2.5 w-2.5 rounded-full bg-primary/80" />
+            <span
+              className="ml-2 text-[11px] text-muted-foreground"
+              style={{ fontFamily: "var(--font-mono)" }}
+            >
+              Solution.java
+            </span>
+            <span className="ml-auto rounded-md border border-border/60 px-2 py-0.5 text-[10px] text-muted-foreground">
+              Java
+            </span>
           </div>
 
-          {/* mini radar */}
-          <div className="mt-3 flex items-center gap-3">
-            <svg viewBox="0 0 60 60" className="h-14 w-14 -rotate-90">
-              <circle cx="30" cy="30" r="22" stroke="oklch(1 0 0 / 0.08)" fill="none" />
-              <circle cx="30" cy="30" r="15" stroke="oklch(1 0 0 / 0.08)" fill="none" />
-              <polygon
-                points="30,10 48,26 42,50 18,50 12,26"
-                fill="oklch(0.88 0.22 128 / 0.3)"
-                stroke="oklch(0.88 0.22 128)"
-                strokeWidth="1.2"
+          <pre
+            className="overflow-hidden px-4 py-4 text-[11px] leading-[1.7] text-muted-foreground"
+            style={{ fontFamily: "var(--font-mono)" }}
+          >
+{`public class Solution {
+  public static int[] twoSum(int[] a, int t) {
+    Map<Integer, Integer> m = new HashMap<>();
+    for (int i = 0; i < a.length; i++) {
+      int rem = t - a[i];
+      if (m.containsKey(rem))
+        return new int[]{ m.get(rem), i };
+      m.put(a[i], i);
+    }
+    return new int[]{};
+  }
+}`}
+          </pre>
+
+          <div className="border-t border-border/50 bg-surface/50 px-4 py-3">
+            <div className="flex items-center justify-between text-[11px]">
+              <span className="inline-flex items-center gap-1.5 text-primary">
+                <Sparkles className="h-3 w-3" /> AI is analyzing…
+              </span>
+              <span className="text-muted-foreground">Time &amp; space complexity</span>
+            </div>
+            <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-background/70">
+              <div
+                className="h-full w-2/3 animate-pulse rounded-full"
+                style={{ background: "var(--gradient-gold)" }}
               />
-            </svg>
-            <div className="text-[10px] leading-relaxed">
-              <div>accuracy · <span className="text-foreground">82</span></div>
-              <div>concepts · <span className="text-foreground">74</span></div>
-              <div>coding · <span className="text-foreground">69</span></div>
             </div>
           </div>
         </div>
 
-        {/* Floating tech chips */}
-        {chips.map((c, i) => (
-          <span
-            key={c}
-            className="absolute glass text-xs px-2.5 py-1 rounded-full text-foreground/90 font-medium animate-float-slow"
-            style={{
-              top: `${10 + (i % 3) * 28}%`,
-              left: i % 2 === 0 ? `${-4 + (i * 6) % 20}%` : undefined,
-              right: i % 2 !== 0 ? `${-4 + (i * 5) % 20}%` : undefined,
-              animationDelay: `${i * 0.6}s`,
-            }}
-          >
-            {c}
-          </span>
-        ))}
+        {/* Side panels */}
+        <div className="flex flex-col gap-4">
+          <div className="rounded-[20px] border border-border/60 bg-surface/50 p-4 shadow-card backdrop-blur">
+            <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
+              Overall accuracy
+            </div>
+            <div className="mt-3 flex items-center gap-3">
+              <svg viewBox="0 0 44 44" className="h-16 w-16 -rotate-90">
+                <circle cx="22" cy="22" r="18" fill="none" stroke="oklch(1 0 0 / 0.08)" strokeWidth="5" />
+                <circle
+                  cx="22"
+                  cy="22"
+                  r="18"
+                  fill="none"
+                  stroke="oklch(0.75 0.17 155)"
+                  strokeWidth="5"
+                  strokeLinecap="round"
+                  strokeDasharray={`${0.82 * 2 * Math.PI * 18} ${2 * Math.PI * 18}`}
+                />
+              </svg>
+              <div>
+                <div className="text-2xl font-semibold tabular-nums">82%</div>
+                <div className="text-[10px] text-muted-foreground">Great performance</div>
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-[20px] border border-border/60 bg-surface/50 p-4 shadow-card backdrop-blur">
+            <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
+              Weak areas
+            </div>
+            <ul className="mt-2.5 space-y-1.5 text-[11px] text-foreground/85">
+              {[
+                { t: "Dynamic Programming", c: "oklch(0.7 0.2 30)" },
+                { t: "Multithreading", c: "oklch(0.82 0.14 82)" },
+                { t: "System Design", c: "oklch(0.6 0.18 255)" },
+              ].map((w) => (
+                <li key={w.t} className="flex items-center gap-2">
+                  <span className="h-1.5 w-1.5 rounded-full" style={{ background: w.c }} />
+                  {w.t}
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="rounded-[20px] border border-border/60 bg-surface/50 p-4 shadow-card backdrop-blur">
+            <div className="flex items-center justify-between">
+              <div className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                Performance trend
+              </div>
+              <span className="rounded-full bg-primary/15 px-2 py-0.5 text-[9px] font-semibold text-primary">
+                Improving
+              </span>
+            </div>
+            <svg viewBox="0 0 120 40" className="mt-2 h-14 w-full">
+              <defs>
+                <linearGradient id="heroTrend" x1="0" x2="0" y1="0" y2="1">
+                  <stop offset="0%" stopColor="oklch(0.82 0.14 82 / 0.35)" />
+                  <stop offset="100%" stopColor="oklch(0.82 0.14 82 / 0)" />
+                </linearGradient>
+              </defs>
+              <path
+                d="M2 32 L20 27 L38 29 L56 20 L74 16 L92 12 L118 6"
+                fill="none"
+                stroke="oklch(0.82 0.14 82)"
+                strokeWidth="1.8"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+              <path
+                d="M2 32 L20 27 L38 29 L56 20 L74 16 L92 12 L118 6 L118 40 L2 40 Z"
+                fill="url(#heroTrend)"
+              />
+            </svg>
+          </div>
+        </div>
       </div>
     </div>
   );
