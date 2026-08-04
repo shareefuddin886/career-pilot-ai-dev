@@ -60,21 +60,28 @@ type Phase = "setup" | "quiz" | "report";
 type Difficulty = "easy" | "medium" | "hard";
 type Mode = "mixed" | "mcq" | "coding" | "scenario" | "debugging" | "rapid";
 
-type Tech = { id: string; badge: string; topics: string[]; approx: string };
+type Tech = {
+  id: string;
+  badge: string;
+  topics: string[];
+  approx: string;
+  coverage: number;
+  accent: string;
+};
 
 const TECHS: Tech[] = [
-  { id: "Java", badge: "JV", topics: ["OOP", "Collections", "Streams", "JVM", "Multithreading"], approx: "200+ concepts" },
-  { id: "Spring Boot", badge: "SB", topics: ["DI", "JPA", "REST", "Security", "Actuator"], approx: "150+ concepts" },
-  { id: "Python", badge: "PY", topics: ["Syntax", "OOP", "Generators", "Async", "Libs"], approx: "180+ concepts" },
-  { id: "JavaScript", badge: "JS", topics: ["ES6+", "Async", "DOM", "Closures", "Modules"], approx: "220+ concepts" },
-  { id: "React", badge: "Rx", topics: ["Hooks", "State", "Rendering", "Suspense", "Perf"], approx: "160+ concepts" },
-  { id: "SQL", badge: "SQ", topics: ["Joins", "Indexes", "Windows", "CTEs", "Tuning"], approx: "120+ concepts" },
-  { id: "MongoDB", badge: "Mo", topics: ["Documents", "Aggregation", "Indexing", "Sharding"], approx: "90+ concepts" },
-  { id: "Node.js", badge: "Nd", topics: ["Event loop", "Streams", "APIs", "Perf"], approx: "140+ concepts" },
-  { id: "C++", badge: "C+", topics: ["Pointers", "STL", "OOP", "Templates"], approx: "170+ concepts" },
-  { id: "Data Structures", badge: "DS", topics: ["Arrays", "Trees", "Graphs", "Heaps"], approx: "150+ concepts" },
-  { id: "Algorithms", badge: "Al", topics: ["Greedy", "DP", "Graphs", "Divide & conquer"], approx: "180+ concepts" },
-  { id: "Git", badge: "Gt", topics: ["Branching", "Rebase", "Workflows"], approx: "60+ concepts" },
+  { id: "Java", badge: "JV", topics: ["OOP", "Collections", "Streams", "JVM", "Multithreading"], approx: "200+ concepts", coverage: 93, accent: "oklch(0.72 0.17 45)" },
+  { id: "Spring Boot", badge: "SB", topics: ["DI", "JPA", "REST", "Security", "Actuator"], approx: "150+ concepts", coverage: 88, accent: "oklch(0.75 0.18 145)" },
+  { id: "Python", badge: "PY", topics: ["Syntax", "OOP", "Generators", "Async", "Libs"], approx: "180+ concepts", coverage: 90, accent: "oklch(0.75 0.15 235)" },
+  { id: "JavaScript", badge: "JS", topics: ["ES6+", "Async", "DOM", "Closures", "Modules"], approx: "220+ concepts", coverage: 85, accent: "oklch(0.85 0.16 95)" },
+  { id: "React", badge: "Rx", topics: ["Hooks", "State", "Rendering", "Suspense", "Perf"], approx: "160+ concepts", coverage: 87, accent: "oklch(0.78 0.13 220)" },
+  { id: "SQL", badge: "SQ", topics: ["Joins", "Indexes", "Windows", "CTEs", "Tuning"], approx: "120+ concepts", coverage: 91, accent: "oklch(0.7 0.17 300)" },
+  { id: "MongoDB", badge: "Mo", topics: ["Documents", "Aggregation", "Indexing", "Sharding"], approx: "90+ concepts", coverage: 82, accent: "oklch(0.75 0.16 150)" },
+  { id: "Node.js", badge: "Nd", topics: ["Event loop", "Streams", "APIs", "Perf"], approx: "140+ concepts", coverage: 83, accent: "oklch(0.76 0.17 140)" },
+  { id: "C++", badge: "C+", topics: ["Pointers", "STL", "OOP", "Templates"], approx: "170+ concepts", coverage: 84, accent: "oklch(0.7 0.15 250)" },
+  { id: "Data Structures", badge: "DS", topics: ["Arrays", "Trees", "Graphs", "Heaps"], approx: "150+ concepts", coverage: 89, accent: "oklch(0.72 0.14 260)" },
+  { id: "Algorithms", badge: "Al", topics: ["Greedy", "DP", "Graphs", "Divide & conquer"], approx: "180+ concepts", coverage: 86, accent: "oklch(0.7 0.18 310)" },
+  { id: "Git", badge: "Gt", topics: ["Branching", "Rebase", "Workflows"], approx: "60+ concepts", coverage: 78, accent: "oklch(0.72 0.18 40)" },
 ];
 
 const DIFFS: {
@@ -93,14 +100,15 @@ const MODES: {
   id: Mode;
   label: string;
   desc: string;
+  split: string;
   icon: React.ComponentType<{ className?: string }>;
 }[] = [
-  { id: "mixed", label: "Mixed", desc: "Balanced MCQ, code and scenario", icon: Layers },
-  { id: "mcq", label: "MCQ", desc: "Conceptual multiple choice", icon: BrainCircuit },
-  { id: "coding", label: "Coding", desc: "Code prediction & completion", icon: Code2 },
-  { id: "scenario", label: "Scenario", desc: "Real-world design problems", icon: Lightbulb },
-  { id: "debugging", label: "Debugging", desc: "Spot and fix bugs in code", icon: Bug },
-  { id: "rapid", label: "Rapid Fire", desc: "Short, quick MCQs", icon: Zap },
+  { id: "mixed", label: "Mixed", desc: "Balanced MCQ, code and scenario", split: "Balanced blend", icon: Layers },
+  { id: "mcq", label: "MCQ", desc: "Conceptual multiple choice", split: "100% MCQ", icon: BrainCircuit },
+  { id: "coding", label: "Coding", desc: "Code prediction & completion", split: "100% Coding", icon: Code2 },
+  { id: "scenario", label: "Scenario", desc: "Real-world design problems", split: "100% Scenario", icon: Lightbulb },
+  { id: "debugging", label: "Debugging", desc: "Spot and fix bugs in code", split: "100% Debugging", icon: Bug },
+  { id: "rapid", label: "Rapid Fire", desc: "Short, quick MCQs", split: "Speed run", icon: Zap },
 ];
 
 function computeMix(mode: Mode, count: number, diff: Difficulty) {
