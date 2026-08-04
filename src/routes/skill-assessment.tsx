@@ -89,11 +89,13 @@ const DIFFS: {
   label: string;
   hint: string;
   sub: string;
+  time: string;
+  bestFor: string;
   icon: React.ComponentType<{ className?: string }>;
 }[] = [
-  { id: "easy", label: "Easy", hint: "Beginner · Fundamentals", sub: "Basic syntax and core ideas", icon: Sparkles },
-  { id: "medium", label: "Medium", hint: "Placement · Problem solving", sub: "Interview concepts and applied logic", icon: Flame },
-  { id: "hard", label: "Hard", hint: "Company interview · Advanced", sub: "System design and edge cases", icon: Rocket },
+  { id: "easy", label: "Easy", hint: "Beginner · Fundamentals", sub: "Basic syntax and core ideas", time: "10–12 min", bestFor: "Best for beginners", icon: Sparkles },
+  { id: "medium", label: "Medium", hint: "Placement · Problem solving", sub: "Interview concepts and applied logic", time: "15–20 min", bestFor: "Best for placements", icon: Flame },
+  { id: "hard", label: "Hard", hint: "Company interview · Advanced", sub: "System design and edge cases", time: "25–35 min", bestFor: "Best for experienced", icon: Rocket },
 ];
 
 const MODES: {
