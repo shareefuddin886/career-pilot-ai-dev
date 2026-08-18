@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import ResumeStudio from "@/components/resume-studio/ResumeStudio";
 
-export const Route = createFileRoute("/resume-builder")({
+export const Route = createFileRoute("/_authenticated/resume-builder")({
   head: () => ({
     meta: [
       { title: "Resume Studio — CareerPilot AI" },
