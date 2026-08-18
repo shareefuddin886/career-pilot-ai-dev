@@ -9,12 +9,17 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedSkillAssessmentRouteImport } from './routes/_authenticated/skill-assessment'
 import { Route as AuthenticatedResumeReviewRouteImport } from './routes/_authenticated/resume-review'
 import { Route as AuthenticatedResumeBuilderRouteImport } from './routes/_authenticated/resume-builder'
 import { Route as AuthenticatedMockInterviewRouteImport } from './routes/_authenticated/mock-interview'
 
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -22,27 +27,27 @@ const IndexRoute = IndexRouteImport.update({
 } as any)
 const AuthenticatedSkillAssessmentRoute =
   AuthenticatedSkillAssessmentRouteImport.update({
-    id: '/_authenticated/skill-assessment',
+    id: '/skill-assessment',
     path: '/skill-assessment',
-    getParentRoute: () => rootRouteImport,
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedResumeReviewRoute =
   AuthenticatedResumeReviewRouteImport.update({
-    id: '/_authenticated/resume-review',
+    id: '/resume-review',
     path: '/resume-review',
-    getParentRoute: () => rootRouteImport,
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedResumeBuilderRoute =
   AuthenticatedResumeBuilderRouteImport.update({
-    id: '/_authenticated/resume-builder',
+    id: '/resume-builder',
     path: '/resume-builder',
-    getParentRoute: () => rootRouteImport,
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedMockInterviewRoute =
   AuthenticatedMockInterviewRouteImport.update({
-    id: '/_authenticated/mock-interview',
+    id: '/mock-interview',
     path: '/mock-interview',
-    getParentRoute: () => rootRouteImport,
+    getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -62,6 +67,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/_authenticated/mock-interview': typeof AuthenticatedMockInterviewRoute
   '/_authenticated/resume-builder': typeof AuthenticatedResumeBuilderRoute
   '/_authenticated/resume-review': typeof AuthenticatedResumeReviewRoute
@@ -85,6 +91,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/_authenticated'
     | '/_authenticated/mock-interview'
     | '/_authenticated/resume-builder'
     | '/_authenticated/resume-review'
@@ -93,14 +100,18 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AuthenticatedMockInterviewRoute: typeof AuthenticatedMockInterviewRoute
-  AuthenticatedResumeBuilderRoute: typeof AuthenticatedResumeBuilderRoute
-  AuthenticatedResumeReviewRoute: typeof AuthenticatedResumeReviewRoute
-  AuthenticatedSkillAssessmentRoute: typeof AuthenticatedSkillAssessmentRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -113,38 +124,52 @@ declare module '@tanstack/react-router' {
       path: '/skill-assessment'
       fullPath: '/skill-assessment'
       preLoaderRoute: typeof AuthenticatedSkillAssessmentRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/resume-review': {
       id: '/_authenticated/resume-review'
       path: '/resume-review'
       fullPath: '/resume-review'
       preLoaderRoute: typeof AuthenticatedResumeReviewRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/resume-builder': {
       id: '/_authenticated/resume-builder'
       path: '/resume-builder'
       fullPath: '/resume-builder'
       preLoaderRoute: typeof AuthenticatedResumeBuilderRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/mock-interview': {
       id: '/_authenticated/mock-interview'
       path: '/mock-interview'
       fullPath: '/mock-interview'
       preLoaderRoute: typeof AuthenticatedMockInterviewRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
   }
 }
 
-const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedMockInterviewRoute: typeof AuthenticatedMockInterviewRoute
+  AuthenticatedResumeBuilderRoute: typeof AuthenticatedResumeBuilderRoute
+  AuthenticatedResumeReviewRoute: typeof AuthenticatedResumeReviewRoute
+  AuthenticatedSkillAssessmentRoute: typeof AuthenticatedSkillAssessmentRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedMockInterviewRoute: AuthenticatedMockInterviewRoute,
   AuthenticatedResumeBuilderRoute: AuthenticatedResumeBuilderRoute,
   AuthenticatedResumeReviewRoute: AuthenticatedResumeReviewRoute,
   AuthenticatedSkillAssessmentRoute: AuthenticatedSkillAssessmentRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
+const rootRouteChildren: RootRouteChildren = {
+  IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
