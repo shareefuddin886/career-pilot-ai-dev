@@ -14,7 +14,211 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      assessment_results: {
+        Row: {
+          assessment_id: string | null
+          created_at: string
+          detailed_report: Json | null
+          id: string
+          recommendations: Json
+          strengths: Json
+          user_id: string
+          weak_topics: Json
+          weaknesses: Json
+        }
+        Insert: {
+          assessment_id?: string | null
+          created_at?: string
+          detailed_report?: Json | null
+          id?: string
+          recommendations?: Json
+          strengths?: Json
+          user_id: string
+          weak_topics?: Json
+          weaknesses?: Json
+        }
+        Update: {
+          assessment_id?: string | null
+          created_at?: string
+          detailed_report?: Json | null
+          id?: string
+          recommendations?: Json
+          strengths?: Json
+          user_id?: string
+          weak_topics?: Json
+          weaknesses?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "assessment_results_assessment_id_fkey"
+            columns: ["assessment_id"]
+            isOneToOne: false
+            referencedRelation: "skill_assessments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      interview_reports: {
+        Row: {
+          created_at: string
+          detailed_report: Json | null
+          feedback: string | null
+          id: string
+          interview_id: string | null
+          recommendations: Json
+          strengths: Json
+          user_id: string
+          weaknesses: Json
+        }
+        Insert: {
+          created_at?: string
+          detailed_report?: Json | null
+          feedback?: string | null
+          id?: string
+          interview_id?: string | null
+          recommendations?: Json
+          strengths?: Json
+          user_id: string
+          weaknesses?: Json
+        }
+        Update: {
+          created_at?: string
+          detailed_report?: Json | null
+          feedback?: string | null
+          id?: string
+          interview_id?: string | null
+          recommendations?: Json
+          strengths?: Json
+          user_id?: string
+          weaknesses?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "interview_reports_interview_id_fkey"
+            columns: ["interview_id"]
+            isOneToOne: false
+            referencedRelation: "mock_interviews"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mock_interviews: {
+        Row: {
+          completed_at: string
+          difficulty: string
+          id: string
+          interview_type: string
+          score: number | null
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string
+          difficulty: string
+          id?: string
+          interview_type: string
+          score?: number | null
+          user_id: string
+        }
+        Update: {
+          completed_at?: string
+          difficulty?: string
+          id?: string
+          interview_type?: string
+          score?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          education: string | null
+          email: string | null
+          full_name: string | null
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          education?: string | null
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          education?: string | null
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      resumes: {
+        Row: {
+          created_at: string
+          id: string
+          resume_data: Json
+          review_result: Json | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          resume_data?: Json
+          review_result?: Json | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          resume_data?: Json
+          review_result?: Json | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      skill_assessments: {
+        Row: {
+          completed_at: string
+          difficulty: string
+          id: string
+          percentage: number | null
+          score: number | null
+          technology: string
+          total_questions: number | null
+          user_id: string
+        }
+        Insert: {
+          completed_at?: string
+          difficulty: string
+          id?: string
+          percentage?: number | null
+          score?: number | null
+          technology: string
+          total_questions?: number | null
+          user_id: string
+        }
+        Update: {
+          completed_at?: string
+          difficulty?: string
+          id?: string
+          percentage?: number | null
+          score?: number | null
+          technology?: string
+          total_questions?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
