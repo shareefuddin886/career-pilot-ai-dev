@@ -28,7 +28,7 @@ import {
   type InterviewTurn,
 } from "@/lib/interview.functions";
 
-export const Route = createFileRoute("/mock-interview")({
+export const Route = createFileRoute("/_authenticated/mock-interview")({
   head: () => ({
     meta: [
       { title: "AI Interview Simulator — CareerPilot AI" },
