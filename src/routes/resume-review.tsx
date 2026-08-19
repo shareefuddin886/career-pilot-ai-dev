@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { ScanSearch } from "lucide-react";
 import { ComingNext } from "@/components/ComingNext";
 
-export const Route = createFileRoute("/_authenticated/resume-review")({
+export const Route = createFileRoute("/resume-review")({
   head: () => ({
     meta: [
       { title: "AI Resume Review — CareerPilot AI" },
