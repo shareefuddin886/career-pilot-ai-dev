@@ -42,7 +42,7 @@ import {
   type AssessmentQuestion,
 } from "@/lib/assessment.functions";
 
-export const Route = createFileRoute("/_authenticated/skill-assessment")({
+export const Route = createFileRoute("/skill-assessment")({
   head: () => ({
     meta: [
       { title: "AI Skill Assessment — CareerPilot AI" },
