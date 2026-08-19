@@ -1,9 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Menu, X, LogOut } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/use-auth";
-import { useRouter } from "@tanstack/react-router";
+import { Menu, X } from "lucide-react";
 
 const links = [
   { to: "/", label: "Home" },
@@ -16,15 +13,6 @@ const links = [
 export function Navbar() {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const { user } = useAuth();
-  const router = useRouter();
-
-  async function signOut() {
-    await supabase.auth.signOut();
-    setOpen(false);
-    await router.invalidate();
-    router.navigate({ to: "/auth", search: { mode: "login" }, replace: true });
-  }
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12);
@@ -81,37 +69,13 @@ export function Navbar() {
         </nav>
 
         <div className="hidden lg:flex items-center gap-3">
-          {user ? (
-            <>
-              <span className="max-w-[180px] truncate text-sm text-muted-foreground">
-                {(user.user_metadata?.full_name as string) || user.email}
-              </span>
-              <button
-                onClick={signOut}
-                className="inline-flex items-center gap-1.5 rounded-xl border border-border/60 px-4 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-              >
-                <LogOut className="h-4 w-4" /> Log out
-              </button>
-            </>
-          ) : (
-            <>
-              <Link
-                to="/auth"
-                search={{ mode: "login" }}
-                className="rounded-xl px-4 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-              >
-                Log in
-              </Link>
-              <Link
-                to="/auth"
-                search={{ mode: "signup" }}
-                className="inline-flex items-center gap-1.5 rounded-xl px-5 py-2.5 text-sm font-semibold text-primary-foreground transition-transform hover:scale-105 shadow-glow"
-                style={{ background: "var(--gradient-gold)" }}
-              >
-                Get Started
-              </Link>
-            </>
-          )}
+          <Link
+            to="/skill-assessment"
+            className="inline-flex items-center gap-1.5 rounded-xl px-5 py-2.5 text-sm font-semibold text-primary-foreground transition-transform hover:scale-105 shadow-glow"
+            style={{ background: "var(--gradient-gold)" }}
+          >
+            Get Started
+          </Link>
         </div>
 
         <button
@@ -137,33 +101,6 @@ export function Navbar() {
                 {l.label}
               </Link>
             ))}
-            {user ? (
-              <button
-                onClick={signOut}
-                className="mt-1 flex items-center gap-2 rounded-lg px-4 py-3 text-left text-sm text-muted-foreground hover:bg-surface hover:text-foreground"
-              >
-                <LogOut className="h-4 w-4" /> Log out
-              </button>
-            ) : (
-              <>
-                <Link
-                  to="/auth"
-                  search={{ mode: "login" }}
-                  onClick={() => setOpen(false)}
-                  className="px-4 py-3 text-sm text-muted-foreground hover:text-foreground rounded-lg hover:bg-surface"
-                >
-                  Log in
-                </Link>
-                <Link
-                  to="/auth"
-                  search={{ mode: "signup" }}
-                  onClick={() => setOpen(false)}
-                  className="px-4 py-3 text-sm font-semibold text-foreground rounded-lg hover:bg-surface"
-                >
-                  Sign up
-                </Link>
-              </>
-            )}
           </nav>
         </div>
       )}
