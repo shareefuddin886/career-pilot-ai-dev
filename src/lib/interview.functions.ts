@@ -101,6 +101,9 @@ export const generateQuestions = createServerFn({ method: "POST" })
         system: systemPrompt(data),
         prompt: `Generate exactly ${total} realistic, commonly asked interview questions.
 ${mix}
+Reference questions that show the EXACT expected difficulty and style for this level (match their depth, do not copy them verbatim):
+${fallback.slice(0, 6).map((q) => `- ${q}`).join("\n")}
+
 Rules:
 - Respect the difficulty definition strictly. Do NOT make MEDIUM questions advanced.
 - One sentence each, no numbering, no preamble, no explanations.
