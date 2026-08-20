@@ -366,7 +366,7 @@ function SetupView({ onStart }: { onStart: (cfg: InterviewConfig) => void }) {
             Adaptive AI — questions evolve based on your answers.
           </p>
           <button
-            disabled={starting || skills.length === 0}
+            disabled={starting || (type !== "hr" && skills.length === 0)}
             onClick={handleStart}
             className="group inline-flex items-center gap-2 rounded-full px-6 py-3.5 text-sm font-semibold text-primary-foreground transition-transform hover:scale-[1.02] shadow-glow disabled:opacity-60 disabled:cursor-not-allowed"
             style={{ background: "var(--gradient-gold)" }}
