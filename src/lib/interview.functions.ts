@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { generateText } from "ai";
 import { z } from "zod";
 import { createLovableAiGatewayProvider } from "./ai-gateway.server";
-import { buildFallbackQuestions, DIFFICULTY_GUIDE } from "./interview-bank";
+import { buildFallbackQuestions, DIFFICULTY_GUIDE, hasCuratedBank } from "./interview-bank";
 
 const MessageSchema = z.object({
   question: z.string(),
@@ -84,6 +84,12 @@ export const generateQuestions = createServerFn({ method: "POST" })
       skills: data.skills,
       totalQuestions: total,
     });
+
+    // Curated bank is level-accurate for known skills — prefer it for reliability.
+    const fullyCurated =
+      data.type === "hr" ||
+      (data.skills.length > 0 && data.skills.every((s) => hasCuratedBank(s)));
+    if (fullyCurated) return { questions: fallback, source: "bank" as const };
 
     const provider = getProvider();
     if (!provider) return { questions: fallback, source: "bank" as const };

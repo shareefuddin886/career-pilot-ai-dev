@@ -266,6 +266,10 @@ const GENERIC: Bank = {
   ],
 };
 
+export function hasCuratedBank(skill: string): boolean {
+  return Object.keys(TECH).some((k) => k.toLowerCase() === skill.trim().toLowerCase());
+}
+
 function bankFor(skill: string): Bank {
   const key = Object.keys(TECH).find(
     (k) => k.toLowerCase() === skill.trim().toLowerCase(),
