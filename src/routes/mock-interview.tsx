@@ -23,10 +23,11 @@ import {
 import {
   evaluateAnswer,
   generateReport,
-  startInterview,
+  generateQuestions,
   type InterviewConfig,
   type InterviewTurn,
 } from "@/lib/interview.functions";
+import { buildFallbackQuestions } from "@/lib/interview-bank";
 
 export const Route = createFileRoute("/mock-interview")({
   head: () => ({
@@ -509,10 +510,10 @@ function SessionView({
   onComplete: (history: InterviewTurn[]) => void;
   onExit: () => void;
 }) {
-  const startFn = useServerFn(startInterview);
+  const questionsFn = useServerFn(generateQuestions);
   const evalFn = useServerFn(evaluateAnswer);
 
-  const [question, setQuestion] = useState<string | null>(null);
+  const [questions, setQuestions] = useState<string[]>([]);
   const [answer, setAnswer] = useState("");
   const [history, setHistory] = useState<InterviewTurn[]>([]);
   const [qIndex, setQIndex] = useState(0);
@@ -521,22 +522,34 @@ function SessionView({
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [secondsLeft, setSecondsLeft] = useState(config.duration * 60);
 
+  const question = questions[qIndex] ?? null;
+  const total = questions.length || config.totalQuestions;
+
   const started = useRef(false);
 
   useEffect(() => {
     if (started.current) return;
     started.current = true;
     (async () => {
+      let list: string[] = [];
       try {
-        const r = await startFn({ data: config });
-        setQuestion(r.question);
+        const r = await questionsFn({ data: config });
+        list = Array.isArray(r?.questions) ? r.questions.filter((q) => typeof q === "string" && q.trim()) : [];
       } catch (e) {
         console.error(e);
-      } finally {
-        setLoading(false);
       }
+      if (!list.length) {
+        list = buildFallbackQuestions({
+          type: config.type,
+          difficulty: config.difficulty,
+          skills: config.skills,
+          totalQuestions: config.totalQuestions,
+        });
+      }
+      setQuestions(list);
+      setLoading(false);
     })();
-  }, [config, startFn]);
+  }, [config, questionsFn]);
 
   useEffect(() => {
     const t = setInterval(() => setSecondsLeft((s) => Math.max(0, s - 1)), 1000);
@@ -546,44 +559,49 @@ function SessionView({
   const mm = String(Math.floor(secondsLeft / 60)).padStart(2, "0");
   const ss = String(secondsLeft % 60).padStart(2, "0");
 
-  const progress = ((qIndex) / config.totalQuestions) * 100;
+  const progress = (qIndex / total) * 100;
 
   const submit = async (skipped = false) => {
     if (!question || submitting) return;
     setSubmitting(true);
+    const finalAnswer = skipped ? "[skipped]" : answer.trim();
+    const isLast = qIndex + 1 >= total;
+    const newTurn: InterviewTurn = { question, answer: finalAnswer };
     try {
-      const finalAnswer = skipped ? "[skipped]" : answer.trim();
       const evalResult = await evalFn({
         data: {
-          config,
+          config: { ...config, totalQuestions: total },
           history,
           currentQuestion: question,
           answer: finalAnswer || "[no answer]",
           questionIndex: qIndex,
         },
       });
-      setFeedback(evalResult);
-      const newTurn: InterviewTurn = {
-        question,
-        answer: finalAnswer,
-        score: evalResult.score,
-      };
-      setHistory((h) => [...h, newTurn]);
+      setFeedback({ ...evalResult, isLast });
+      newTurn.score = evalResult.score;
     } catch (e) {
       console.error(e);
+      setFeedback({
+        score: skipped ? 0 : 5,
+        strengths: [],
+        improvements: ["Feedback could not be generated for this answer."],
+        suggestion: "Continue with the interview — your answer has been recorded.",
+        isLast,
+      });
+      newTurn.score = skipped ? 0 : 5;
     } finally {
+      setHistory((h) => [...h, newTurn]);
       setSubmitting(false);
     }
   };
 
   const advance = () => {
     if (!feedback) return;
-    if (feedback.isLast || !feedback.nextQuestion) {
+    if (feedback.isLast || qIndex + 1 >= total) {
       onComplete(history);
       return;
     }
     setQIndex((i) => i + 1);
-    setQuestion(feedback.nextQuestion);
     setAnswer("");
     setFeedback(null);
   };
@@ -603,7 +621,7 @@ function SessionView({
           </div>
           <div className="flex-1 min-w-[160px]">
             <div className="flex items-center justify-between text-xs text-muted-foreground mb-1.5">
-              <span>Question {Math.min(qIndex + 1, config.totalQuestions)} of {config.totalQuestions}</span>
+              <span>Question {Math.min(qIndex + 1, total)} of {total}</span>
               <span className="inline-flex items-center gap-1 font-mono">
                 <Clock className="h-3 w-3" /> {mm}:{ss}
               </span>
@@ -731,15 +749,6 @@ function FeedbackCard({ feedback, onNext }: { feedback: Feedback; onNext: () => 
           tone="warning"
         />
       </div>
-
-      {!feedback.isLast && feedback.nextQuestion && feedback.shouldFollowUp && (
-        <div className="mt-6 rounded-2xl border border-primary/30 bg-primary/5 p-4">
-          <div className="text-[11px] uppercase tracking-widest text-primary">
-            Follow-up
-          </div>
-          <p className="mt-1.5 text-sm text-foreground/90">{feedback.nextQuestion}</p>
-        </div>
-      )}
 
       <div className="mt-8 flex justify-end">
         <button
