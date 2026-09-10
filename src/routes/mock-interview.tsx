@@ -158,14 +158,22 @@ function SetupView({ onStart }: { onStart: (cfg: InterviewConfig) => void }) {
 
   const totalQuestions = questionsByDifficulty[difficulty];
 
+  // Keep the tested skills aligned with the selected role so questions stay role-specific.
+  const changeRole = (r: string) => {
+    setRole(r);
+    const suggested = skillsForRole(r);
+    if (suggested.length) setSkills(suggested);
+  };
+
   const handleStart = () => {
     setStarting(true);
+    const effectiveSkills = skills.length ? skills : skillsForRole(role);
     onStart({
       role,
       type,
       difficulty,
       duration,
-      skills,
+      skills: effectiveSkills,
       language,
       totalQuestions,
     });
@@ -173,6 +181,7 @@ function SetupView({ onStart }: { onStart: (cfg: InterviewConfig) => void }) {
 
   const toggleSkill = (s: string) =>
     setSkills((prev) => (prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]));
+
 
   return (
     <section className="mx-auto max-w-7xl px-4 md:px-8 py-16 md:py-24">
