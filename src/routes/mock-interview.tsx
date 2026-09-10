@@ -27,7 +27,7 @@ import {
   type InterviewConfig,
   type InterviewTurn,
 } from "@/lib/interview.functions";
-import { buildFallbackQuestions } from "@/lib/interview-bank";
+import { buildFallbackQuestions, skillsForRole } from "@/lib/interview-bank";
 
 export const Route = createFileRoute("/mock-interview")({
   head: () => ({
@@ -158,14 +158,22 @@ function SetupView({ onStart }: { onStart: (cfg: InterviewConfig) => void }) {
 
   const totalQuestions = questionsByDifficulty[difficulty];
 
+  // Keep the tested skills aligned with the selected role so questions stay role-specific.
+  const changeRole = (r: string) => {
+    setRole(r);
+    const suggested = skillsForRole(r);
+    if (suggested.length) setSkills(suggested);
+  };
+
   const handleStart = () => {
     setStarting(true);
+    const effectiveSkills = skills.length ? skills : skillsForRole(role);
     onStart({
       role,
       type,
       difficulty,
       duration,
-      skills,
+      skills: effectiveSkills,
       language,
       totalQuestions,
     });
@@ -173,6 +181,7 @@ function SetupView({ onStart }: { onStart: (cfg: InterviewConfig) => void }) {
 
   const toggleSkill = (s: string) =>
     setSkills((prev) => (prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]));
+
 
   return (
     <section className="mx-auto max-w-7xl px-4 md:px-8 py-16 md:py-24">
@@ -237,7 +246,7 @@ function SetupView({ onStart }: { onStart: (cfg: InterviewConfig) => void }) {
               <Briefcase className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <select
                 value={role}
-                onChange={(e) => setRole(e.target.value)}
+                onChange={(e) => changeRole(e.target.value)}
                 className="w-full appearance-none rounded-xl bg-surface border border-border/60 pl-10 pr-10 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
               >
                 {ROLES.map((r) => (
@@ -518,6 +527,8 @@ function SessionView({
   const [history, setHistory] = useState<InterviewTurn[]>([]);
   const [qIndex, setQIndex] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [secondsLeft, setSecondsLeft] = useState(config.duration * 60);
@@ -525,36 +536,74 @@ function SessionView({
   const question = questions[qIndex] ?? null;
   const total = questions.length || config.totalQuestions;
 
-  const started = useRef(false);
+  const historyRef = useRef<InterviewTurn[]>([]);
+  historyRef.current = history;
+  const finishedRef = useRef(false);
+
+  const finish = (turns: InterviewTurn[]) => {
+    if (finishedRef.current) return;
+    finishedRef.current = true;
+    onComplete(turns);
+  };
 
   useEffect(() => {
-    if (started.current) return;
-    started.current = true;
+    let cancelled = false;
+    setLoading(true);
+    setLoadError(null);
     (async () => {
       let list: string[] = [];
       try {
         const r = await questionsFn({ data: config });
-        list = Array.isArray(r?.questions) ? r.questions.filter((q) => typeof q === "string" && q.trim()) : [];
+        list = Array.isArray(r?.questions)
+          ? r.questions.filter((q) => typeof q === "string" && q.trim())
+          : [];
       } catch (e) {
         console.error(e);
       }
       if (!list.length) {
-        list = buildFallbackQuestions({
-          type: config.type,
-          difficulty: config.difficulty,
-          skills: config.skills,
-          totalQuestions: config.totalQuestions,
-        });
+        try {
+          list = buildFallbackQuestions({
+            type: config.type,
+            difficulty: config.difficulty,
+            skills: config.skills,
+            totalQuestions: config.totalQuestions,
+          });
+        } catch (e) {
+          console.error(e);
+        }
+      }
+      if (cancelled) return;
+      if (!list.length) {
+        setLoadError(
+          "We couldn't prepare your interview questions right now. Your setup is saved — please retry.",
+        );
+        setLoading(false);
+        return;
       }
       setQuestions(list);
+      setQIndex(0);
       setLoading(false);
     })();
-  }, [config, questionsFn]);
+    return () => {
+      cancelled = true;
+    };
+  }, [config, questionsFn, attempt]);
 
+  // Timer starts only once the interview screen is actually live.
   useEffect(() => {
-    const t = setInterval(() => setSecondsLeft((s) => Math.max(0, s - 1)), 1000);
+    if (loading || loadError) return;
+    const t = setInterval(() => {
+      setSecondsLeft((s) => (s <= 1 ? 0 : s - 1));
+    }, 1000);
     return () => clearInterval(t);
-  }, []);
+  }, [loading, loadError]);
+
+  // Time up → finish with whatever has been answered so far.
+  useEffect(() => {
+    if (!loading && !loadError && secondsLeft === 0) {
+      finish(historyRef.current);
+    }
+  }, [secondsLeft, loading, loadError]);
 
   const mm = String(Math.floor(secondsLeft / 60)).padStart(2, "0");
   const ss = String(secondsLeft % 60).padStart(2, "0");
@@ -590,7 +639,11 @@ function SessionView({
       });
       newTurn.score = skipped ? 0 : 5;
     } finally {
-      setHistory((h) => [...h, newTurn]);
+      setHistory((h) => {
+        const next = [...h, newTurn];
+        historyRef.current = next;
+        return next;
+      });
       setSubmitting(false);
     }
   };
@@ -598,13 +651,22 @@ function SessionView({
   const advance = () => {
     if (!feedback) return;
     if (feedback.isLast || qIndex + 1 >= total) {
-      onComplete(history);
+      finish(historyRef.current);
       return;
     }
     setQIndex((i) => i + 1);
     setAnswer("");
     setFeedback(null);
   };
+
+  const endInterview = () => {
+    if (historyRef.current.length === 0) {
+      onExit();
+      return;
+    }
+    finish(historyRef.current);
+  };
+
 
   return (
     <div className="min-h-[calc(100vh-4rem)]">
@@ -637,7 +699,7 @@ function SessionView({
             </div>
           </div>
           <button
-            onClick={onExit}
+            onClick={endInterview}
             className="inline-flex items-center gap-1.5 rounded-full glass px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground"
           >
             <X className="h-3.5 w-3.5" /> End Interview
@@ -653,8 +715,29 @@ function SessionView({
               Preparing your interview room…
             </p>
           </div>
+        ) : loadError ? (
+          <div className="glass rounded-3xl p-8 md:p-10 shadow-card text-center">
+            <h2 className="text-xl font-semibold">Something went wrong</h2>
+            <p className="mt-3 text-sm text-muted-foreground">{loadError}</p>
+            <div className="mt-6 flex flex-wrap justify-center gap-3">
+              <button
+                onClick={() => setAttempt((a) => a + 1)}
+                className="inline-flex items-center gap-2 rounded-full px-6 py-2.5 text-sm font-semibold text-primary-foreground shadow-glow"
+                style={{ background: "var(--gradient-gold)" }}
+              >
+                Retry
+              </button>
+              <button
+                onClick={onExit}
+                className="rounded-full border border-border/60 bg-surface px-6 py-2.5 text-sm text-muted-foreground hover:text-foreground"
+              >
+                Back to setup
+              </button>
+            </div>
+          </div>
         ) : feedback ? (
           <FeedbackCard feedback={feedback} onNext={advance} />
+
         ) : (
           <motion.div
             key={question}
