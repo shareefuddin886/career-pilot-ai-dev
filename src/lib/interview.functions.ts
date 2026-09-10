@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { generateText } from "ai";
 import { z } from "zod";
 import { createLovableAiGatewayProvider } from "./ai-gateway.server";
-import { buildFallbackQuestions, DIFFICULTY_GUIDE, hasCuratedBank } from "./interview-bank";
+import { buildFallbackQuestions, DIFFICULTY_GUIDE, hasCuratedBank, skillsForRole } from "./interview-bank";
 
 const MessageSchema = z.object({
   question: z.string(),
