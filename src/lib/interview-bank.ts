@@ -266,9 +266,26 @@ const GENERIC: Bank = {
   ],
 };
 
+/** Skills implied by a role, used when the candidate picks no skills explicitly. */
+const ROLE_SKILLS: Record<string, string[]> = {
+  "java developer": ["Java", "SQL"],
+  "spring boot developer": ["Spring Boot", "Java", "SQL"],
+  "backend developer": ["Java", "SQL", "REST API"],
+  "full stack developer": ["JavaScript", "React", "SQL"],
+  "frontend developer": ["JavaScript", "React"],
+  "software engineer": ["Java", "Data Structures", "SQL"],
+  "python developer": ["Python", "SQL"],
+  "data analyst": ["SQL", "Python"],
+};
+
+export function skillsForRole(role: string): string[] {
+  return ROLE_SKILLS[role.trim().toLowerCase()] ?? [];
+}
+
 export function hasCuratedBank(skill: string): boolean {
   return Object.keys(TECH).some((k) => k.toLowerCase() === skill.trim().toLowerCase());
 }
+
 
 function bankFor(skill: string): Bank {
   const key = Object.keys(TECH).find(
