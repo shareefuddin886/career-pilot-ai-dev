@@ -518,6 +518,8 @@ function SessionView({
   const [history, setHistory] = useState<InterviewTurn[]>([]);
   const [qIndex, setQIndex] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [secondsLeft, setSecondsLeft] = useState(config.duration * 60);
@@ -525,36 +527,74 @@ function SessionView({
   const question = questions[qIndex] ?? null;
   const total = questions.length || config.totalQuestions;
 
-  const started = useRef(false);
+  const historyRef = useRef<InterviewTurn[]>([]);
+  historyRef.current = history;
+  const finishedRef = useRef(false);
+
+  const finish = (turns: InterviewTurn[]) => {
+    if (finishedRef.current) return;
+    finishedRef.current = true;
+    onComplete(turns);
+  };
 
   useEffect(() => {
-    if (started.current) return;
-    started.current = true;
+    let cancelled = false;
+    setLoading(true);
+    setLoadError(null);
     (async () => {
       let list: string[] = [];
       try {
         const r = await questionsFn({ data: config });
-        list = Array.isArray(r?.questions) ? r.questions.filter((q) => typeof q === "string" && q.trim()) : [];
+        list = Array.isArray(r?.questions)
+          ? r.questions.filter((q) => typeof q === "string" && q.trim())
+          : [];
       } catch (e) {
         console.error(e);
       }
       if (!list.length) {
-        list = buildFallbackQuestions({
-          type: config.type,
-          difficulty: config.difficulty,
-          skills: config.skills,
-          totalQuestions: config.totalQuestions,
-        });
+        try {
+          list = buildFallbackQuestions({
+            type: config.type,
+            difficulty: config.difficulty,
+            skills: config.skills,
+            totalQuestions: config.totalQuestions,
+          });
+        } catch (e) {
+          console.error(e);
+        }
+      }
+      if (cancelled) return;
+      if (!list.length) {
+        setLoadError(
+          "We couldn't prepare your interview questions right now. Your setup is saved — please retry.",
+        );
+        setLoading(false);
+        return;
       }
       setQuestions(list);
+      setQIndex(0);
       setLoading(false);
     })();
-  }, [config, questionsFn]);
+    return () => {
+      cancelled = true;
+    };
+  }, [config, questionsFn, attempt]);
 
+  // Timer starts only once the interview screen is actually live.
   useEffect(() => {
-    const t = setInterval(() => setSecondsLeft((s) => Math.max(0, s - 1)), 1000);
+    if (loading || loadError) return;
+    const t = setInterval(() => {
+      setSecondsLeft((s) => (s <= 1 ? 0 : s - 1));
+    }, 1000);
     return () => clearInterval(t);
-  }, []);
+  }, [loading, loadError]);
+
+  // Time up → finish with whatever has been answered so far.
+  useEffect(() => {
+    if (!loading && !loadError && secondsLeft === 0) {
+      finish(historyRef.current);
+    }
+  }, [secondsLeft, loading, loadError]);
 
   const mm = String(Math.floor(secondsLeft / 60)).padStart(2, "0");
   const ss = String(secondsLeft % 60).padStart(2, "0");
@@ -590,7 +630,11 @@ function SessionView({
       });
       newTurn.score = skipped ? 0 : 5;
     } finally {
-      setHistory((h) => [...h, newTurn]);
+      setHistory((h) => {
+        const next = [...h, newTurn];
+        historyRef.current = next;
+        return next;
+      });
       setSubmitting(false);
     }
   };
@@ -598,13 +642,22 @@ function SessionView({
   const advance = () => {
     if (!feedback) return;
     if (feedback.isLast || qIndex + 1 >= total) {
-      onComplete(history);
+      finish(historyRef.current);
       return;
     }
     setQIndex((i) => i + 1);
     setAnswer("");
     setFeedback(null);
   };
+
+  const endInterview = () => {
+    if (historyRef.current.length === 0) {
+      onExit();
+      return;
+    }
+    finish(historyRef.current);
+  };
+
 
   return (
     <div className="min-h-[calc(100vh-4rem)]">
