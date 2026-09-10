@@ -690,7 +690,7 @@ function SessionView({
             </div>
           </div>
           <button
-            onClick={onExit}
+            onClick={endInterview}
             className="inline-flex items-center gap-1.5 rounded-full glass px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground"
           >
             <X className="h-3.5 w-3.5" /> End Interview
@@ -706,8 +706,29 @@ function SessionView({
               Preparing your interview room…
             </p>
           </div>
+        ) : loadError ? (
+          <div className="glass rounded-3xl p-8 md:p-10 shadow-card text-center">
+            <h2 className="text-xl font-semibold">Something went wrong</h2>
+            <p className="mt-3 text-sm text-muted-foreground">{loadError}</p>
+            <div className="mt-6 flex flex-wrap justify-center gap-3">
+              <button
+                onClick={() => setAttempt((a) => a + 1)}
+                className="inline-flex items-center gap-2 rounded-full px-6 py-2.5 text-sm font-semibold text-primary-foreground shadow-glow"
+                style={{ background: "var(--gradient-gold)" }}
+              >
+                Retry
+              </button>
+              <button
+                onClick={onExit}
+                className="rounded-full border border-border/60 bg-surface px-6 py-2.5 text-sm text-muted-foreground hover:text-foreground"
+              >
+                Back to setup
+              </button>
+            </div>
+          </div>
         ) : feedback ? (
           <FeedbackCard feedback={feedback} onNext={advance} />
+
         ) : (
           <motion.div
             key={question}
