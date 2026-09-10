@@ -246,7 +246,7 @@ function SetupView({ onStart }: { onStart: (cfg: InterviewConfig) => void }) {
               <Briefcase className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <select
                 value={role}
-                onChange={(e) => setRole(e.target.value)}
+                onChange={(e) => changeRole(e.target.value)}
                 className="w-full appearance-none rounded-xl bg-surface border border-border/60 pl-10 pr-10 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
               >
                 {ROLES.map((r) => (
