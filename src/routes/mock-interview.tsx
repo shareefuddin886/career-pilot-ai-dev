@@ -27,7 +27,7 @@ import {
   type InterviewConfig,
   type InterviewTurn,
 } from "@/lib/interview.functions";
-import { buildFallbackQuestions } from "@/lib/interview-bank";
+import { buildFallbackQuestions, skillsForRole } from "@/lib/interview-bank";
 
 export const Route = createFileRoute("/mock-interview")({
   head: () => ({
