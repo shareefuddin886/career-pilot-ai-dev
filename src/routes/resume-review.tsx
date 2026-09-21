@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { AlertCircle, FileText, Trash2 } from "lucide-react";
+import { AlertCircle, Clock3, FileText, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ReportView } from "@/components/resume-review/ReportView";
 import { ScanningStep, type Stage } from "@/components/resume-review/ScanningStep";
@@ -27,6 +27,11 @@ export const Route = createFileRoute("/resume-review")({
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+    ],
+    links: [
+      { rel: "preconnect", href: "https://fonts.googleapis.com" },
+      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
+      { rel: "stylesheet", href: "https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" },
     ],
   }),
   component: ResumeReviewPage,
@@ -137,31 +142,37 @@ function ResumeReviewPage() {
   }, [state, extract, review, hasJd, stages.length]);
 
   return (
-    <main className="mx-auto w-full max-w-5xl px-6 py-14">
+    <main className="resume-review-theme min-h-[calc(100vh-5rem)] px-4 py-10 sm:px-6 sm:py-14">
+      <div className="mx-auto w-full max-w-6xl">
       {phase === "upload" ? (
         <>
-          <header className="mb-10">
-            <h1 className="text-3xl font-semibold">Resume Review</h1>
-            <p className="mt-2 text-sm text-muted-foreground">
+          <header className="mb-8 animate-fade-in sm:mb-10">
+            <p className="resume-kicker">Career document analysis</p>
+            <h1 className="mt-2 text-3xl font-semibold sm:text-4xl">Resume Review</h1>
+            <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground sm:text-base">
               Get clear, actionable feedback on your resume.
             </p>
           </header>
 
-          <UploadStep state={state} setState={setState} onStart={() => void start()} error={error} />
+          <div className={history.length ? "grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]" : ""}>
+            <UploadStep state={state} setState={setState} onStart={() => void start()} error={error} />
 
-          {history.length ? (
-            <section className="mt-14 border-t border-border pt-8">
-              <h2 className="text-base font-semibold">Recent reviews</h2>
+            {history.length ? (
+            <section className="resume-history h-fit p-5 sm:p-6">
+              <div className="flex items-center gap-2">
+                <Clock3 className="h-4 w-4 text-primary" />
+                <h2 className="text-base font-semibold">Recent reviews</h2>
+              </div>
               <ul className="mt-4 space-y-2">
                 {history.map((r) => (
                   <li
                     key={r.id}
-                    className="flex items-center gap-3 rounded-md border border-border bg-surface/40 px-4 py-3"
+                    className="resume-history-row grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 px-3 py-3"
                   >
                     <FileText className="h-4 w-4 shrink-0 text-muted-foreground" />
                     <button
                       type="button"
-                      className="min-w-0 flex-1 text-left"
+                      className="min-w-0 text-left"
                       onClick={() => {
                         setResult(r);
                         setPhase("report");
@@ -170,8 +181,8 @@ function ResumeReviewPage() {
                       <span className="block truncate text-sm font-medium">
                         {r.candidate.name ?? r.resumeFileName}
                       </span>
-                      <span className="block text-xs text-muted-foreground">
-                        {new Date(r.createdAt).toLocaleString()} · {r.overallScore}/100
+                      <span className="mt-0.5 block text-xs text-muted-foreground">
+                        {new Date(r.createdAt).toLocaleDateString()} · Score {r.overallScore}/100
                       </span>
                     </button>
                     <Button
@@ -186,7 +197,8 @@ function ResumeReviewPage() {
                 ))}
               </ul>
             </section>
-          ) : null}
+            ) : null}
+          </div>
         </>
       ) : null}
 
@@ -208,6 +220,7 @@ function ResumeReviewPage() {
           <AlertCircle className="h-4 w-4" /> This review is no longer available.
         </p>
       ) : null}
+      </div>
     </main>
   );
 }

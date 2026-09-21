@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { AlertCircle, FileText, Upload, X } from "lucide-react";
+import { AlertCircle, CheckCircle2, FileText, Upload, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -29,15 +29,20 @@ function validate(file: File): string | null {
 
 function FileRow({ file, onRemove }: { file: File; onRemove: () => void }) {
   return (
-    <div className="flex items-center gap-3 rounded-md border border-border bg-surface px-4 py-3">
-      <FileText className="h-4 w-4 shrink-0 text-primary" />
+    <div className="resume-file-row animate-scale-in flex items-center gap-3 px-4 py-4">
+      <span className="resume-file-icon grid h-10 w-10 shrink-0 place-items-center rounded-lg">
+        <FileText className="h-5 w-5" />
+      </span>
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-medium">{file.name}</p>
         <p className="text-xs text-muted-foreground">
           {fileKind(file.name)} · {formatSize(file.size)}
         </p>
+        <p className="mt-1 flex items-center gap-1.5 text-xs text-emerald-400">
+          <CheckCircle2 className="h-3.5 w-3.5" /> Ready to review
+        </p>
       </div>
-      <Button variant="ghost" size="sm" onClick={onRemove} aria-label="Remove file">
+      <Button variant="ghost" size="icon" onClick={onRemove} aria-label="Remove file" title="Remove file">
         <X className="h-4 w-4" />
       </Button>
     </div>
@@ -68,13 +73,13 @@ function DropZone({
         const f = e.dataTransfer.files?.[0];
         if (f) onPick(f);
       }}
-      className={`rounded-md border border-dashed px-6 py-8 text-center transition-colors ${
-        over ? "border-primary bg-primary/5" : "border-border bg-surface/50"
-      }`}
+      className={`resume-dropzone flex min-h-[248px] flex-col items-center justify-center px-6 py-8 text-center ${over ? "is-over" : ""}`}
     >
-      <Upload className="mx-auto h-5 w-5 text-muted-foreground" />
-      <p className="mt-3 text-sm text-muted-foreground">{label}</p>
-      <p className="mt-1 text-xs text-muted-foreground/80">PDF or DOCX, up to 5 MB</p>
+      <span className="resume-upload-icon grid h-14 w-14 place-items-center rounded-xl">
+        <Upload className="h-6 w-6" />
+      </span>
+      <p className="mt-5 text-base font-medium text-foreground">{label}</p>
+      <p className="mt-1.5 text-xs text-muted-foreground">PDF or DOCX · Maximum 5 MB</p>
       <input
         id={inputId}
         ref={ref}
@@ -87,8 +92,8 @@ function DropZone({
           e.target.value = "";
         }}
       />
-      <Button variant="outline" className="mt-4" onClick={() => ref.current?.click()}>
-        Choose file
+      <Button variant="outline" className="resume-secondary-button mt-5" onClick={() => ref.current?.click()}>
+        Browse files
       </Button>
     </div>
   );
@@ -116,13 +121,18 @@ export function UploadStep({
   const [jdMode, setJdMode] = useState<"upload" | "paste">("paste");
 
   return (
-    <section className="space-y-8">
-      <div className="grid gap-8 lg:grid-cols-2">
+    <section className="space-y-6">
+      <div className="grid gap-5 lg:grid-cols-2">
         {/* Resume */}
-        <div className="flex flex-col rounded-lg border border-border bg-surface/40 p-6">
-          <h2 className="text-base font-semibold">Resume</h2>
-          <p className="mt-1 text-sm text-muted-foreground">Upload your resume.</p>
-          <div className="mt-5 flex-1">
+        <div className="resume-panel flex min-h-[390px] flex-col p-5 sm:p-6">
+          <div className="flex items-start gap-3">
+            <span className="resume-section-number">01</span>
+            <div>
+              <h2 className="text-lg font-semibold">Resume upload</h2>
+              <p className="mt-1 text-sm text-muted-foreground">Add the resume you want Nexora to review.</p>
+            </div>
+          </div>
+          <div className="mt-6 flex flex-1 flex-col justify-center">
             {state.resume ? (
               <FileRow
                 file={state.resume}
@@ -131,7 +141,7 @@ export function UploadStep({
             ) : (
               <DropZone
                 inputId="resume-input"
-                label="Drag your resume here, or choose a file"
+                label="Drag & drop your resume here"
                 onPick={(f) => {
                   const err = validate(f);
                   setResumeError(err);
@@ -149,37 +159,47 @@ export function UploadStep({
         </div>
 
         {/* Job description */}
-        <div className="flex flex-col rounded-lg border border-border bg-surface/40 p-6">
-          <h2 className="text-base font-semibold">Job Description</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Optional — add a job description for a role-specific review.
-          </p>
+        <div className="resume-panel flex min-h-[390px] flex-col p-5 sm:p-6">
+          <div className="flex items-start gap-3">
+            <span className="resume-section-number">02</span>
+            <div>
+              <div className="flex flex-wrap items-center gap-2">
+                <h2 className="text-lg font-semibold">Job description</h2>
+                <span className="resume-optional-label">Optional</span>
+              </div>
+              <p className="mt-1 text-sm text-muted-foreground">Add the role details for a targeted comparison.</p>
+            </div>
+          </div>
 
-          <div className="mt-5 flex gap-2">
+          <div className="resume-segment mt-6 grid grid-cols-2 p-1">
             {(["paste", "upload"] as const).map((m) => (
-              <button
+              <Button
                 key={m}
                 type="button"
+                variant="ghost"
+                size="sm"
                 onClick={() => setJdMode(m)}
-                className={`rounded-md border px-3 py-1.5 text-xs font-medium transition-colors ${
-                  jdMode === m
-                    ? "border-primary/60 bg-primary/10 text-foreground"
-                    : "border-border text-muted-foreground hover:text-foreground"
-                }`}
+                className={jdMode === m ? "is-active" : ""}
               >
-                {m === "paste" ? "Paste text" : "Upload file"}
-              </button>
+                {m === "paste" ? "Paste description" : "Upload file"}
+              </Button>
             ))}
           </div>
 
-          <div className="mt-4 flex-1">
+          <div className="mt-4 flex flex-1 flex-col">
             {jdMode === "paste" ? (
-              <Textarea
-                value={state.jdText}
-                onChange={(e) => setState({ ...state, jdText: e.target.value, jdFile: null })}
-                placeholder="Paste the job description here…"
-                className="min-h-[188px] resize-y bg-surface"
-              />
+              <>
+                <Textarea
+                  value={state.jdText}
+                  onChange={(e) => setState({ ...state, jdText: e.target.value, jdFile: null })}
+                  placeholder="Paste the role responsibilities, requirements, and preferred skills here…"
+                  className="resume-textarea min-h-[188px] flex-1 resize-none"
+                  aria-label="Job description"
+                />
+                <p className="mt-2 text-right text-xs tabular-nums text-muted-foreground">
+                  {state.jdText.length.toLocaleString()} characters
+                </p>
+              </>
             ) : state.jdFile ? (
               <FileRow file={state.jdFile} onRemove={() => setState({ ...state, jdFile: null })} />
             ) : (
@@ -210,22 +230,27 @@ export function UploadStep({
         </p>
       ) : null}
 
-      <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center">
+      <div className="resume-action-bar grid gap-4 p-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:p-5">
+        <div className="min-w-0">
+          <p className="text-sm font-medium text-foreground">
+            {state.resume ? "Ready when you are" : "Upload a resume to begin"}
+          </p>
+          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+            {state.resume
+              ? state.jdFile || state.jdText.trim().length > 40
+                ? "Your review will include a role-specific requirements comparison."
+                : "Your review will focus on content, impact, structure, skills, and ATS readability."
+              : "PDF or DOCX files up to 5 MB are supported."}
+          </p>
+        </div>
         <Button
           size="lg"
-          className="w-full sm:w-auto"
+          className="resume-primary-button h-12 w-full px-7 sm:w-auto"
           disabled={!state.resume}
           onClick={onStart}
         >
           Review Resume
         </Button>
-        <p className="text-xs text-muted-foreground">
-          {state.resume
-            ? state.jdFile || state.jdText.trim().length > 40
-              ? "We'll run a general review and a role-specific comparison."
-              : "We'll run a general review. Add a job description for a role-specific comparison."
-            : "Please upload a resume to continue."}
-        </p>
       </div>
     </section>
   );

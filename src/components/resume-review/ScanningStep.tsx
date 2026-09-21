@@ -1,4 +1,4 @@
-import { Check, Loader2 } from "lucide-react";
+import { Check, FileSearch, Loader2 } from "lucide-react";
 
 export type Stage = { id: string; label: string };
 
@@ -12,10 +12,13 @@ export function ScanningStep({
   const pct = Math.round((Math.min(activeIndex, stages.length) / stages.length) * 100);
 
   return (
-    <section className="grid gap-10 md:grid-cols-[minmax(0,260px)_minmax(0,1fr)] md:gap-12">
+    <section className="resume-processing animate-fade-in mx-auto grid max-w-4xl gap-8 p-5 sm:p-8 md:grid-cols-[minmax(0,280px)_minmax(0,1fr)] md:items-center md:gap-12">
       {/* Document with scan line */}
       <div className="mx-auto w-full max-w-[260px]">
-        <div className="relative overflow-hidden rounded-lg border border-border bg-surface p-5">
+        <div className="resume-document relative aspect-[4/5] overflow-hidden p-6">
+          <div className="mb-5 flex items-center gap-2 text-xs font-medium text-muted-foreground">
+            <FileSearch className="h-4 w-4" /> Document preview
+          </div>
           <div className="space-y-2.5">
             <div className="h-2.5 w-2/5 rounded-sm bg-foreground/25" />
             <div className="h-1.5 w-3/5 rounded-sm bg-foreground/12" />
@@ -36,7 +39,7 @@ export function ScanningStep({
             ))}
           </div>
           <div
-            className="pointer-events-none absolute inset-x-0 h-px bg-primary/70"
+            className="resume-scan-line pointer-events-none absolute inset-x-0 h-px"
             style={{ animation: "resume-scan 2.4s ease-in-out infinite" }}
             aria-hidden
           />
@@ -45,13 +48,12 @@ export function ScanningStep({
 
       {/* Checklist */}
       <div>
-        <h2 className="text-xl font-semibold">Reviewing your resume</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
-          This usually takes a few seconds.
-        </p>
+        <p className="resume-kicker">Analysis in progress</p>
+        <h2 className="mt-2 text-2xl font-semibold">Reviewing your resume</h2>
+        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">Your document is being read and evaluated securely.</p>
 
         <div
-          className="mt-6 h-1 w-full overflow-hidden rounded-full bg-surface-2"
+          className="resume-progress mt-7 h-2 w-full overflow-hidden rounded-full"
           role="progressbar"
           aria-valuenow={pct}
           aria-valuemin={0}
@@ -59,26 +61,20 @@ export function ScanningStep({
           aria-label="Review progress"
         >
           <div
-            className="h-full rounded-full bg-primary transition-all duration-500"
+            className="resume-progress-fill h-full rounded-full transition-all duration-500"
             style={{ width: `${Math.max(pct, 6)}%` }}
           />
         </div>
-        <p className="mt-2 text-xs text-muted-foreground">{pct}% complete</p>
+        <p className="mt-2 text-right text-xs font-medium tabular-nums text-muted-foreground">{pct}% complete</p>
 
         <ul className="mt-6 space-y-3">
           {stages.map((s, i) => {
             const done = i < activeIndex;
             const active = i === activeIndex;
             return (
-              <li key={s.id} className="flex items-center gap-3 text-sm">
+              <li key={s.id} className={`resume-stage flex items-center gap-3 text-sm ${done ? "is-done" : active ? "is-active" : ""}`}>
                 <span
-                  className={`grid h-5 w-5 shrink-0 place-items-center rounded-full border ${
-                    done
-                      ? "border-emerald-500/50 bg-emerald-500/15 text-emerald-400"
-                      : active
-                        ? "border-primary/50 text-primary"
-                        : "border-border text-muted-foreground/50"
-                  }`}
+                  className="resume-stage-icon grid h-6 w-6 shrink-0 place-items-center rounded-full border"
                 >
                   {done ? (
                     <Check className="h-3 w-3" />
