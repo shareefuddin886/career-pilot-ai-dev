@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Check, Copy, Info } from "lucide-react";
+import { Check, Copy, Info, RotateCcw, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   CATEGORY_LABELS,
@@ -42,8 +42,8 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <section className="border-t border-border pt-8">
-      <h2 className="text-base font-semibold">{title}</h2>
+    <section className="border-t border-border pt-8 sm:pt-10">
+      <h2 className="text-lg font-semibold">{title}</h2>
       {hint ? <p className="mt-1 text-sm text-muted-foreground">{hint}</p> : null}
       <div className="mt-4">{children}</div>
     </section>
@@ -90,31 +90,36 @@ export function ReportView({
   };
 
   return (
-    <div className="space-y-8">
+    <div className="animate-fade-in space-y-8 sm:space-y-10">
       {/* Header */}
-      <header className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold">Resume Review</h1>
+      <header className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-4">
+        <div className="min-w-0">
+          <p className="resume-kicker">Analysis complete</p>
+          <h1 className="mt-2 truncate text-2xl font-semibold sm:text-3xl">Resume Review</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {review.candidate.name ?? review.resumeFileName}
             {review.candidate.title ? ` · ${review.candidate.title}` : ""} · Reviewed {reviewed}
           </p>
         </div>
-        <Button variant="outline" onClick={onNewReview}>
-          Start another review
+        <Button className="resume-secondary-button shrink-0" variant="outline" onClick={onNewReview}>
+          <RotateCcw className="h-4 w-4" />
+          <span className="hidden sm:inline">Review another</span>
         </Button>
       </header>
 
       {/* Score + summary */}
-      <div className="flex flex-col gap-4 rounded-lg border border-border bg-surface/40 p-6 sm:flex-row sm:items-start sm:gap-8">
-        <div className="shrink-0">
-          <p className="text-xs uppercase tracking-wide text-muted-foreground">Overall score</p>
-          <p className="mt-1 text-3xl font-semibold tabular-nums">
+      <div className="resume-panel grid gap-6 p-5 sm:grid-cols-[170px_minmax(0,1fr)] sm:items-center sm:p-7">
+        <div className="shrink-0 border-b border-border pb-5 sm:border-r sm:border-b-0 sm:pb-0 sm:pr-6">
+          <p className="resume-kicker">Resume score</p>
+          <p className="mt-2 text-4xl font-semibold tabular-nums">
             {review.overallScore}
-            <span className="text-base font-normal text-muted-foreground"> / 100</span>
+            <span className="text-sm font-normal text-muted-foreground"> / 100</span>
           </p>
         </div>
-        <p className="text-sm leading-relaxed text-muted-foreground">{review.summary}</p>
+        <div className="min-w-0">
+          <p className="flex items-center gap-2 text-sm font-medium"><Sparkles className="h-4 w-4 text-primary" /> Overall summary</p>
+          <p className="mt-2 text-sm leading-7 text-muted-foreground">{review.summary}</p>
+        </div>
       </div>
 
       {/* Resume health */}
@@ -123,13 +128,11 @@ export function ReportView({
           {(Object.keys(CATEGORY_LABELS) as CategoryKey[]).map((k) => {
             const v = review.categoryScores[k];
             return (
-              <div key={k} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1.5 sm:grid-cols-[180px_minmax(0,1fr)_40px]">
+              <div key={k} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-2 sm:grid-cols-[190px_minmax(0,1fr)_44px]">
                 <span className="text-sm">{CATEGORY_LABELS[k]}</span>
-                <div className="col-span-2 h-1.5 overflow-hidden rounded-full bg-surface-2 sm:col-span-1">
+                <div className="resume-progress col-span-2 h-2 overflow-hidden rounded-full sm:col-span-1">
                   <div
-                    className={`h-full rounded-full ${
-                      v >= 80 ? "bg-emerald-500" : v >= 60 ? "bg-amber-500" : "bg-red-500"
-                    }`}
+                    className={`h-full rounded-full transition-[width] duration-700 ${v >= 80 ? "bg-emerald-500" : v >= 60 ? "resume-progress-fill" : "bg-red-500"}`}
                     style={{ width: `${v}%` }}
                   />
                 </div>
@@ -159,7 +162,7 @@ export function ReportView({
         <Section title="Areas to Improve">
           <div className="space-y-4">
             {review.improvements.map((im, i) => (
-              <div key={i} className="rounded-md border border-border bg-surface/40 p-4">
+              <div key={i} className="resume-file-row p-4 sm:p-5">
                 <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                   {im.category}
                 </p>
@@ -191,7 +194,7 @@ export function ReportView({
               ["Related", counts.related],
               ["Not found", counts.missing],
             ].map(([label, value]) => (
-              <div key={label as string} className="rounded-md border border-border px-4 py-3">
+              <div key={label as string} className="resume-file-row px-4 py-3">
                 <p className="text-xl font-semibold tabular-nums">{value as number}</p>
                 <p className="mt-0.5 text-xs text-muted-foreground">{label as string}</p>
               </div>
@@ -224,7 +227,7 @@ export function ReportView({
           </div>
 
           {counts.missing ? (
-            <div className="mt-6 rounded-md border border-border bg-surface/40 p-4">
+            <div className="resume-file-row mt-6 p-4 sm:p-5">
               <p className="text-sm font-medium">Missing or unverified requirements</p>
               <ul className="mt-2 space-y-1 text-sm text-muted-foreground">
                 {reqs
@@ -248,7 +251,7 @@ export function ReportView({
         <Section title="Suggested Improvements">
           <div className="space-y-4">
             {review.rewrites.map((rw, i) => (
-              <div key={i} className="rounded-md border border-border bg-surface/40 p-4">
+              <div key={i} className="resume-file-row p-4 sm:p-5">
                 <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
                   Current
                 </p>
